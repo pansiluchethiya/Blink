@@ -10,10 +10,10 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['blink.svg', 'icon-192.png', 'icon-512.png', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        id: 'com.blink.chat',
-        name: 'Blink Chat',
+        id: 'com.iop.blink',
+        name: 'Blink by IOP',
         short_name: 'Blink',
-        description: 'Premium, modern chat platform with high-speed performance and sophisticated design.',
+        description: 'Blink by IOP — fast, practical chat for friends and teams.',
         theme_color: '#00D4FF',
         background_color: '#ffffff',
         display: 'standalone',

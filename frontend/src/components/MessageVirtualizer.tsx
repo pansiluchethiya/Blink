@@ -65,20 +65,26 @@ const MessageVirtualizer = ({
     prevScrollTop.current = container.scrollTop;
   }, [items]);
 
-  // Handle scroll events
+  // Handle scroll events — rAF-throttled to avoid per-pixel re-renders
+  const rafId = useRef(0);
   const handleScroll = useCallback((e) => {
     const container = e.currentTarget;
-    const currentScrollTop = container.scrollTop;
-    
-    setScrollTop(currentScrollTop);
-    prevScrollTop.current = currentScrollTop;
-    prevScrollHeight.current = container.scrollHeight;
+    if (rafId.current) return;
+    rafId.current = requestAnimationFrame(() => {
+      rafId.current = 0;
+      const currentScrollTop = container.scrollTop;
+      setScrollTop((prev) => (Math.abs(prev - currentScrollTop) > 4 ? currentScrollTop : prev));
+      prevScrollTop.current = currentScrollTop;
+      prevScrollHeight.current = container.scrollHeight;
 
-    // Check if we hit top sentinel to load more
-    if (currentScrollTop < 100 && onScrollToTop && isMoreAvailable && !isLoadingMore) {
-      onScrollToTop();
-    }
+      // Check if we hit top sentinel to load more
+      if (currentScrollTop < 100 && onScrollToTop && isMoreAvailable && !isLoadingMore) {
+        onScrollToTop();
+      }
+    });
   }, [onScrollToTop, isMoreAvailable, isLoadingMore]);
+
+  useEffect(() => () => { if (rafId.current) cancelAnimationFrame(rafId.current); }, []);
 
   // Height measurement callback for items
   const measureRef = useCallback((id) => (node) => {

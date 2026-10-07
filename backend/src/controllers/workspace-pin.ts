@@ -2,33 +2,72 @@ import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth.middleware.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
-import WorkspaceMessage from "../models/workspaceMessage.model.js";
+import { prisma, toResponse, isValidId } from "../lib/prisma.js";
 import { io } from "../lib/socket.js";
 
-export const togglePinWorkspaceMessage = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { messageId } = req.params;
-  const userId = req.user?._id;
+const meId = (req: AuthRequest): string =>
+  String((req as any).user?._id ?? (req as any).user?.id);
 
-  const message = await WorkspaceMessage.findById(messageId);
-  if (!message) return next(new AppError("Message not found", 404));
+const senderMiniSelect = {
+  id: true,
+  fullName: true,
+  email: true,
+  profilePic: true,
+  status: true,
+} as const;
 
-  message.isPinned = !message.isPinned;
-  message.pinnedAt = message.isPinned ? new Date() : undefined;
-  message.pinnedBy = message.isPinned ? userId : undefined;
+export const shapeWorkspaceMessage = (m: any) => {
+  if (!m) return m;
+  const { id, sender, replyTo, ...rest } = m;
+  const out: any = { ...rest, _id: id, id };
+  if (sender && typeof sender === "object" && (sender as any).id) {
+    out.senderId = toResponse(sender as any);
+  }
+  if (replyTo && typeof replyTo === "object" && (replyTo as any).id) {
+    const { id: rid, sender: rSender, ...rRest } = replyTo as any;
+    const shapedReply: any = { ...rRest, _id: rid, id: rid };
+    if (rSender && typeof rSender === "object" && (rSender as any).id) {
+      shapedReply.senderId = toResponse(rSender as any);
+    }
+    out.replyTo = shapedReply;
+  }
+  if (!out.reactions || typeof out.reactions !== "object") out.reactions = {};
+  return out;
+};
 
-  await message.save();
+export const togglePinWorkspaceMessage = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const { messageId } = req.params;
+    const userId = meId(req);
 
-  const populated = await WorkspaceMessage.findById(messageId)
-    .populate("senderId", "fullName email profilePic status")
-    .populate("replyTo");
+    if (!isValidId(messageId as string)) return next(new AppError("Message not found", 404));
 
-  io.to(message.workspaceId.toString()).emit("workspaceMessagePinToggled", {
-    messageId,
-    isPinned: message.isPinned,
-    workspaceId: message.workspaceId,
-    channelId: message.channelId,
-    message: populated,
-  });
+    const message = await prisma.workspaceMessage.findUnique({
+      where: { id: String(messageId) },
+    });
+    if (!message) return next(new AppError("Message not found", 404));
 
-  res.status(200).json(populated);
-});
+    const nextPinned = !message.isPinned;
+    const updated = await prisma.workspaceMessage.update({
+      where: { id: String(messageId) },
+      data: {
+        isPinned: nextPinned,
+        pinnedAt: nextPinned ? new Date() : null,
+        pinnedBy: nextPinned ? userId : null,
+      },
+      include: { sender: { select: senderMiniSelect }, replyTo: true },
+    });
+
+    const shaped = shapeWorkspaceMessage(updated);
+
+    io.to(message.workspaceId.toString()).emit("workspaceMessagePinToggled", {
+      messageId,
+      isPinned: updated.isPinned,
+      workspaceId: message.workspaceId,
+      channelId: message.channelId,
+      message: shaped,
+    });
+
+    res.status(200).json(shaped);
+  }
+);

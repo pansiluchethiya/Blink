@@ -19,13 +19,14 @@ WORKDIR /app
 
 # Install backend dependencies (including devDependencies to run 'npm run build')
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install
+COPY backend/prisma ./backend/prisma
+RUN cd backend && npm install && npx prisma generate
 
 # Copy backend source
 COPY backend ./backend
 
 # Build backend
-RUN cd backend && npm run build
+RUN cd backend && npx prisma generate && npm run build
 
 # Copy built frontend into backend/public
 COPY --from=frontend-build /app/frontend/dist ./backend/public
@@ -37,5 +38,8 @@ WORKDIR /app/backend
 
 EXPOSE 5001
 
-# Run the compiled code
-CMD ["node", "--trace-uncaught", "dist/index.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:5001/api/health || exit 1
+
+# Run migrations then start within Eco 512MB (cap old-space to leave room for Postgres client + socket)
+CMD ["sh", "-c", "npx prisma migrate deploy && node --max-old-space-size=400 --trace-uncaught dist/index.js"]

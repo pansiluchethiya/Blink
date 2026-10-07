@@ -1,8 +1,8 @@
 {
-  "id": "com.blink.chat",
-  "name": "Blink Chat",
+  "id": "com.iop.blink",
+  "name": "Blink by IOP",
   "short_name": "Blink",
-  "description": "Premium, modern chat platform with high-speed performance and sophisticated design.",
+  "description": "Blink by IOP — fast, practical chat for friends and teams.",
   "lang": "en-US",
   "start_url": "/",
   "scope": "/",

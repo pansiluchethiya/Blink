@@ -1,8 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import mongoose from "mongoose";
-import User from "../models/user.model.js";
-import Message from "../models/message.model.js";
-import Friendship from "../models/friendship.model.js";
+import { prisma, toResponse, toList, isValidId } from "../lib/prisma.js";
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 import NotificationService from "../services/notification.service.js";
@@ -12,6 +9,8 @@ import { getLinkMetadata } from "../lib/linkPreview.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
+
+const meId = (req: AuthRequest): string => String((req as any).user?._id ?? (req as any).user?.id);
 
 const storage = multer.memoryStorage();
 
@@ -57,24 +56,15 @@ const hashPin = (pin: string): string =>
 export const deleteExpiredMessages = async (): Promise<void> => {
   try {
     const now = new Date();
-    const expired = await Message.find({
-      expiresAt: { $lte: now },
-      isExpired: { $ne: true },
+    const res = await prisma.message.updateMany({
+      where: { expiresAt: { lte: now }, isExpired: false },
+      data: { isExpired: true, text: "[Message expired]", image: null, file: undefined },
     });
-
-    if (expired.length === 0) return;
-
-    await Message.updateMany(
-      { _id: { $in: expired.map((msg) => msg._id) } },
-      {
-        isExpired: true,
-        text: "[Message expired]",
-        image: null,
-        file: null,
-      }
-    );
-
-    console.log(`Expired ${expired.length} messages from automated cleanup`);
+    if (res.count > 0) console.log(`Expired ${res.count} messages from automated cleanup`);
+    await prisma.workspaceMessage.updateMany({
+      where: { expiresAt: { lte: now } },
+      data: { text: "[Message expired]", image: "" },
+    });
   } catch (error: any) {
     console.error("Failed to clean up expired messages:", error.message);
   }
@@ -82,45 +72,38 @@ export const deleteExpiredMessages = async (): Promise<void> => {
 
 export const getUsersForSidebar = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const loggedInUserId = req.user._id;
+    const loggedInUserId = meId(req);
 
-    // Get all messages from this user (both sent and received)
-    const messages = await Message.find({
-      $or: [
-        { senderId: loggedInUserId },
-        { receiverId: loggedInUserId },
-      ],
-      isExpired: { $ne: true },
-    })
-      .sort({ createdAt: -1 })
-      .populate("senderId", "fullName profilePic email")
-      .populate("receiverId", "fullName profilePic email")
-      .lean();
-
-    // Get unique users from messages and organize by chat
-    const userMap = new Map();
-    messages.forEach((msg: any) => {
-      if (!msg.senderId || !msg.receiverId) return; // Skip if user account was deleted
-
-      const otherUser = msg.senderId._id.toString() === loggedInUserId.toString() ? msg.receiverId : msg.senderId;
-      if (otherUser && !userMap.has(otherUser._id.toString())) {
-        userMap.set(otherUser._id.toString(), {
-          ...otherUser,
-          lastMessage: msg,
-        });
-      }
+    // Last 200 relevant messages only (perf: no full scan), then aggregate latest per peer
+    const recent = await prisma.message.findMany({
+      where: { OR: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }], isExpired: false },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        sender: { select: { id: true, fullName: true, profilePic: true, email: true } },
+        receiver: { select: { id: true, fullName: true, profilePic: true, email: true } },
+      },
     });
 
-    // Get all other users and add them if not in recent chats
-    const allUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password").lean();
-    allUsers.forEach((user: any) => {
-      if (!userMap.has(user._id.toString())) {
-        userMap.set(user._id.toString(), {
-          ...user,
-          lastMessage: null,
-        });
+    const userMap = new Map<string, any>();
+    for (const msg of recent as any[]) {
+      if (!msg.sender || !msg.receiver) continue;
+      const other = msg.sender.id === loggedInUserId ? msg.receiver : msg.sender;
+      if (other && !userMap.has(other.id)) {
+        userMap.set(other.id, { ...toResponse(other), lastMessage: toResponse(msg) });
       }
+    }
+
+    // Only users with recent chats first; others paginated (50) to keep sidebar fast
+    const others = await prisma.user.findMany({
+      where: { id: { not: loggedInUserId } },
+      select: { id: true, fullName: true, email: true, profilePic: true, status: true, lastSeen: true, username: true, handle: true },
+      take: 50,
+      orderBy: { fullName: "asc" },
     });
+    for (const u of others) {
+      if (!userMap.has(u.id)) userMap.set(u.id, { ...toResponse(u as any), lastMessage: null });
+    }
 
     const users = Array.from(userMap.values()).sort((a: any, b: any) => {
       const aTime = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
@@ -138,21 +121,24 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response): Promi
 export const searchUsers = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { query } = req.query as { query?: string };
-    const loggedInUserId = req.user._id;
+    const loggedInUserId = meId(req);
 
-    if (!query || query.trim() === "") {
-      return res.status(200).json([]);
-    }
+    if (!query || query.trim() === "") return res.status(200).json([]);
 
-    const searchResults = await User.find({
-      _id: { $ne: loggedInUserId },
-      $or: [
-        { fullName: { $regex: query, $options: "i" } },
-        { email: { $regex: query, $options: "i" } },
-      ],
-    }).select("-password");
+    const q = query.trim();
+    const searchResults = await prisma.user.findMany({
+      where: {
+        id: { not: loggedInUserId },
+        OR: [
+          { fullName: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+          { username: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      take: 20,
+    });
 
-    res.status(200).json(searchResults);
+    res.status(200).json(toList(searchResults.map(({ password: _p, ...r }) => r as any)));
   } catch (error: any) {
     console.error("Error in searchUsers: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -163,32 +149,28 @@ export const getMessages = async (req: AuthRequest, res: Response): Promise<any>
   try {
     const { id: userToChatId } = req.params;
     const { limit = "30", before } = req.query as { limit?: string; before?: string };
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    // Validate incoming id to avoid casting strings like 'locked' to ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userToChatId as string)) {
+    if (!isValidId(userToChatId as string) || !isValidId(myId)) {
       return res.status(400).json({ error: "Invalid user id" });
     }
 
-    const query: any = {
-      $or: [
-        { senderId: myId, receiverId: userToChatId },
-        { senderId: userToChatId, receiverId: myId },
-      ],
-      isExpired: { $ne: true },
-    };
+    const take = Math.min(Math.max(parseInt(limit as string) || 30, 1), 100);
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: myId, receiverId: userToChatId },
+          { senderId: userToChatId, receiverId: myId },
+        ],
+        isExpired: false,
+        ...(before ? { createdAt: { lt: new Date(before as string) } } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+      include: { replyTo: true },
+    });
 
-    if (before) {
-      query.createdAt = { $lt: new Date(before as string) };
-    }
-
-    const messages = await Message.find(query)
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit as string))
-      .populate("replyTo");
-
-    // Reverse to maintain chronological order for the frontend
-    res.status(200).json(messages.reverse());
+    res.status(200).json(toList(messages as any[]).reverse());
   } catch (error: any) {
     console.log("Error in getMessages controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -198,26 +180,15 @@ export const getMessages = async (req: AuthRequest, res: Response): Promise<any>
 export const markMessagesAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    // Mark all messages from userId to myId as read
-    await Message.updateMany(
-      {
-        senderId: userId as string,
-        receiverId: myId,
-        isRead: false,
-      },
-      {
-        isRead: true,
-        readAt: new Date(),
-      }
-    );
+    await prisma.message.updateMany({
+      where: { senderId: String(userId), receiverId: myId, isRead: false },
+      data: { isRead: true, readAt: new Date() },
+    });
 
-    // Emit read receipt to sender
-    const senderSocketId = getReceiverSocketId(userId as string);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("messagesReadReceipt", myId);
-    }
+    const senderSocketId = getReceiverSocketId(String(userId));
+    if (senderSocketId) io.to(senderSocketId).emit("messagesReadReceipt", myId);
 
     res.status(200).json({ message: "Messages marked as read" });
   } catch (error: any) {
@@ -232,30 +203,40 @@ export const sendMessage = [
     try {
       const { text, image, replyTo, viewOnce, expiresAt } = req.body;
       const { id: receiverId } = req.params;
-      const senderId = req.user._id;
+      const senderId = String((req as any).user?._id ?? (req as any).user?.id);
+      const sender = (req as any).user;
+
+      if (!isValidId(receiverId as string) || !isValidId(senderId)) {
+        return res.status(400).json({ error: "Invalid user id" });
+      }
 
       if (text && text.length > 1024) {
         return res.status(400).json({ error: "Message must be 1024 characters or less" });
       }
 
       // Check if users are friends (unless they are messaging themselves or one is the Help Center)
-      if (senderId.toString() !== receiverId.toString()) {
+      if (senderId !== String(receiverId)) {
         const helpCenterEmail = process.env.HELP_CENTER_EMAIL || "pansiluco@gmail.com";
-        const isHelpCenterSender = req.user.email === helpCenterEmail;
+        const isHelpCenterSender = sender?.email === helpCenterEmail;
         let isHelpCenterReceiver = false;
 
-        const receiverUser = await User.findById(receiverId);
-        if (receiverUser && receiverUser.email === helpCenterEmail) {
+        const receiverUser = await prisma.user.findUnique({ where: { id: String(receiverId) } });
+        if (!receiverUser) {
+          return res.status(404).json({ error: "Receiver not found" });
+        }
+        if (receiverUser.email === helpCenterEmail) {
           isHelpCenterReceiver = true;
         }
 
         if (!isHelpCenterSender && !isHelpCenterReceiver) {
-          const friendship = await Friendship.findOne({
-            status: "accepted",
-            $or: [
-              { requesterId: senderId, receiverId: receiverId },
-              { requesterId: receiverId, receiverId: senderId }
-            ]
+          const friendship = await prisma.friendship.findFirst({
+            where: {
+              status: "accepted",
+              OR: [
+                { requesterId: senderId, receiverId: String(receiverId) },
+                { requesterId: String(receiverId), receiverId: senderId },
+              ],
+            },
           });
 
           if (!friendship) {
@@ -264,14 +245,14 @@ export const sendMessage = [
         }
       }
 
-      let imageUrl;
+      let imageUrl: string | null = null;
       if (image) {
         // Upload base64 image to cloudinary
         const uploadResponse = await cloudinary.uploader.upload(image);
         imageUrl = uploadResponse.secure_url;
       }
 
-      let fileData = null;
+      let fileData: any = undefined;
       if (req.file) {
         // Upload file to cloudinary
         const uploadResponse = await cloudinary.uploader.upload(`data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`, {
@@ -286,39 +267,43 @@ export const sendMessage = [
         };
       }
 
-      const newMessage = new Message({
-        senderId,
-        deliveredAt: new Date(),
-        text,
-        image: imageUrl,
-        file: fileData,
-        isRead: false,
-        replyTo: replyTo || null,
-        viewOnce: viewOnce === "true" || viewOnce === true,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      const replyToId = typeof replyTo === "string" && isValidId(replyTo) ? replyTo : undefined;
+
+      const created = await prisma.message.create({
+        data: {
+          senderId,
+          receiverId: String(receiverId),
+          deliveredAt: new Date(),
+          text: typeof text === "string" ? text : null,
+          image: imageUrl,
+          file: fileData ?? undefined,
+          isRead: false,
+          replyToId,
+          viewOnce: viewOnce === "true" || viewOnce === true,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+        },
+        include: { replyTo: true },
       });
 
-      await newMessage.save();
-      await newMessage.populate("replyTo");
+      const out = toResponse(created as any) as any;
 
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("newMessage", newMessage);
-        }
-        // Emit delivery status to sender
-        const senderSocketId = getReceiverSocketId(senderId.toString());
-        if (senderSocketId) {
-          io.to(senderSocketId).emit("messageDelivered", { messageId: newMessage._id, deliveredAt: newMessage.deliveredAt });
-        }
-      const sender = req.user;
+      const receiverSocketId = getReceiverSocketId(String(receiverId));
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newMessage", out);
+      }
+      // Emit delivery status to sender
+      const senderSocketId = getReceiverSocketId(senderId);
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messageDelivered", { messageId: out._id, deliveredAt: out.deliveredAt });
+      }
       NotificationService.createNotification({
-        recipient: receiverId,
+        recipient: String(receiverId),
         actor: senderId,
         type: "direct_message",
-        title: sender.fullName,
+        title: sender?.fullName ?? "New message",
         body: text || (image ? "Sent an image" : "Sent a file"),
         metadata: {
-          messageId: newMessage._id,
+          messageId: out._id,
           conversationId: senderId,
         },
       });
@@ -330,16 +315,18 @@ export const sendMessage = [
         if (mentions) {
           for (const mention of mentions) {
             const username = mention.substring(1);
-            const mentionedUser = await User.findOne({ fullName: { $regex: new RegExp(`^${username}$`, "i") } });
-            if (mentionedUser && mentionedUser._id.toString() !== senderId.toString() && mentionedUser._id.toString() !== receiverId.toString()) {
+            const mentionedUser = await prisma.user.findFirst({
+              where: { fullName: { equals: username, mode: "insensitive" } },
+            });
+            if (mentionedUser && mentionedUser.id !== senderId && mentionedUser.id !== String(receiverId)) {
               NotificationService.createNotification({
-                recipient: mentionedUser._id,
+                recipient: mentionedUser.id,
                 actor: senderId,
                 type: "mention",
                 title: "Mentioned you",
                 body: text,
                 metadata: {
-                  messageId: newMessage._id,
+                  messageId: out._id,
                   conversationId: senderId,
                 },
               });
@@ -349,24 +336,24 @@ export const sendMessage = [
       }
 
       // Handle reply
-      if (replyTo) {
-        const originalMessage = await Message.findById(replyTo);
-        if (originalMessage && originalMessage.senderId.toString() !== senderId.toString() && originalMessage.senderId.toString() !== receiverId.toString()) {
+      if (replyToId) {
+        const originalMessage = await prisma.message.findUnique({ where: { id: replyToId } });
+        if (originalMessage && originalMessage.senderId !== senderId && originalMessage.senderId !== String(receiverId)) {
           NotificationService.createNotification({
-            recipient: originalMessage.senderId.toString() as any,
+            recipient: originalMessage.senderId,
             actor: senderId,
             type: "reply",
             title: "Replied to your message",
             body: text,
             metadata: {
-              messageId: newMessage._id,
+              messageId: out._id,
               conversationId: senderId,
             },
           });
         }
       }
 
-      res.status(201).json(newMessage);
+      res.status(201).json(out);
     } catch (error: any) {
       console.log("Error in sendMessage controller: ", error.message);
       res.status(500).json({ error: "Internal server error" });
@@ -379,60 +366,63 @@ export const addReaction = async (req: AuthRequest, res: Response): Promise<any>
   try {
     const { messageId } = req.params;
     const { emoji } = req.body;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const message = await Message.findById(messageId);
+    if (!isValidId(messageId as string)) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
+    if (!emoji) {
+      return res.status(400).json({ error: "Emoji is required" });
+    }
+
+    const message = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    if (!message.reactions) {
-      message.reactions = new Map();
-    }
-
-    if (!message.reactions.has(emoji)) {
-      message.reactions.set(emoji, []);
-    }
-
-    const usersWithReaction = message.reactions.get(emoji);
-    if (usersWithReaction && !usersWithReaction.some((id: any) => id.toString() === userId.toString())) {
+    const reactions = (((message.reactions as any) ?? {}) as Record<string, string[]>);
+    const usersWithReaction = Array.isArray(reactions[emoji]) ? reactions[emoji] : [];
+    if (!usersWithReaction.some((id: any) => String(id) === userId)) {
       usersWithReaction.push(userId);
-      message.markModified("reactions");
     }
+    reactions[emoji] = usersWithReaction;
 
-    await message.save();
+    await prisma.message.update({
+      where: { id: message.id },
+      data: { reactions: reactions as any },
+    });
 
     // Send notification to message sender
-    if (message.senderId.toString() !== userId.toString()) {
+    if (message.senderId !== userId) {
       NotificationService.createNotification({
-        recipient: message.senderId.toString() as any,
+        recipient: message.senderId,
         actor: userId,
         type: "reaction",
         title: "Reacted to your message",
         body: emoji,
         metadata: {
-          messageId: message._id,
+          messageId: message.id,
           reactionType: emoji,
         },
       });
     }
 
-    // Emit to both users
-    const receiverId = message.receiverId;
-    const senderId = message.senderId;
-    const otherUserId = userId.toString() === senderId.toString() ? receiverId : senderId;
+    // Emit to other user
+    const otherUserId = userId === message.senderId ? message.receiverId : message.senderId;
 
-    const otherUserSocketId = getReceiverSocketId(otherUserId.toString());
-    if (otherUserSocketId) {
-      io.to(otherUserSocketId).emit("messageReactionAdded", {
-        messageId,
-        emoji,
-        userId,
-        reactions: Object.fromEntries(message.reactions),
-      });
+    if (otherUserId) {
+      const otherUserSocketId = getReceiverSocketId(String(otherUserId));
+      if (otherUserSocketId) {
+        io.to(otherUserSocketId).emit("messageReactionAdded", {
+          messageId,
+          emoji,
+          userId,
+          reactions,
+        });
+      }
     }
 
-    res.status(200).json({ reactions: Object.fromEntries(message.reactions) });
+    res.status(200).json({ reactions });
   } catch (error: any) {
     console.log("Error in addReaction: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -444,44 +434,54 @@ export const removeReaction = async (req: AuthRequest, res: Response): Promise<a
   try {
     const { messageId } = req.params;
     const { emoji } = req.body;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const message = await Message.findById(messageId);
+    if (!isValidId(messageId as string)) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
+    if (!emoji) {
+      return res.status(400).json({ error: "Emoji is required" });
+    }
+
+    const message = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    if (message.reactions && message.reactions.has(emoji)) {
-      const usersWithReaction = message.reactions.get(emoji);
-      if (usersWithReaction) {
-        const index = usersWithReaction.findIndex((id: any) => id.toString() === userId.toString());
-        if (index !== -1) {
-          usersWithReaction.splice(index, 1);
-          if (usersWithReaction.length === 0) {
-            message.reactions.delete(emoji);
-          }
-          message.markModified("reactions");
-          await message.save();
+    const reactions = (((message.reactions as any) ?? {}) as Record<string, string[]>);
+    if (Array.isArray(reactions[emoji])) {
+      const usersWithReaction = reactions[emoji];
+      const index = usersWithReaction.findIndex((id: any) => String(id) === userId);
+      if (index !== -1) {
+        usersWithReaction.splice(index, 1);
+        if (usersWithReaction.length === 0) {
+          delete reactions[emoji];
+        } else {
+          reactions[emoji] = usersWithReaction;
         }
+        await prisma.message.update({
+          where: { id: message.id },
+          data: { reactions: reactions as any },
+        });
       }
     }
 
     // Emit to other user
-    const receiverId = message.receiverId;
-    const senderId = message.senderId;
-    const otherUserId = userId.toString() === senderId.toString() ? receiverId : senderId;
+    const otherUserId = userId === message.senderId ? message.receiverId : message.senderId;
 
-    const otherUserSocketId = getReceiverSocketId(otherUserId.toString());
-    if (otherUserSocketId) {
-      io.to(otherUserSocketId).emit("messageReactionRemoved", {
-        messageId,
-        emoji,
-        userId,
-        reactions: Object.fromEntries(message.reactions || new Map()),
-      });
+    if (otherUserId) {
+      const otherUserSocketId = getReceiverSocketId(String(otherUserId));
+      if (otherUserSocketId) {
+        io.to(otherUserSocketId).emit("messageReactionRemoved", {
+          messageId,
+          emoji,
+          userId,
+          reactions,
+        });
+      }
     }
 
-    res.status(200).json({ reactions: Object.fromEntries(message.reactions || new Map()) });
+    res.status(200).json({ reactions });
   } catch (error: any) {
     console.log("Error in removeReaction: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -493,89 +493,102 @@ export const editMessage = async (req: AuthRequest, res: Response): Promise<any>
   try {
     const { messageId } = req.params;
     const { text } = req.body;
-    const userId = req.user._id;
+    const userId = meId(req);
+
+    if (!isValidId(messageId as string)) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
 
     if (text && text.length > 1024) {
       return res.status(400).json({ error: "Message must be 1024 characters or less" });
     }
 
-    const message = await Message.findById(messageId);
+    const message = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    if (message.senderId.toString() !== userId.toString()) {
+    if (message.senderId !== userId) {
       return res.status(403).json({ error: "Can only edit your own messages" });
     }
 
     // Add to edit history
-    if (!message.editHistory) {
-      message.editHistory = [];
-    }
-    message.editHistory.push({
+    const editHistory = (Array.isArray(message.editHistory) ? [...(message.editHistory as any[])] : []) as any[];
+    editHistory.push({
       text: message.text || "",
-      editedAt: new Date(),
+      editedAt: new Date().toISOString(),
     });
 
-    message.text = text;
-    message.isEdited = true;
-    message.editedAt = new Date();
-
-    await message.save();
-
-    // Emit to other user
-    const receiverId = message.receiverId;
-    const otherUserSocketId = getReceiverSocketId(receiverId.toString());
-    if (otherUserSocketId) {
-      io.to(otherUserSocketId).emit("messageEdited", {
-        messageId,
+    const updated = await prisma.message.update({
+      where: { id: message.id },
+      data: {
         text,
         isEdited: true,
-        editedAt: message.editedAt,
-      });
+        editedAt: new Date(),
+        editHistory: editHistory as any,
+      },
+    });
+
+    // Emit to other user
+    if (message.receiverId) {
+      const otherUserSocketId = getReceiverSocketId(String(message.receiverId));
+      if (otherUserSocketId) {
+        io.to(otherUserSocketId).emit("messageEdited", {
+          messageId,
+          text,
+          isEdited: true,
+          editedAt: updated.editedAt,
+        });
+      }
     }
 
-    res.status(200).json(message);
+    res.status(200).json(toResponse(updated as any));
   } catch (error: any) {
     console.log("Error in editMessage: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// Delete message
+// Delete message (soft-delete to preserve thread/reply integrity)
 export const deleteMessage = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { messageId } = req.params;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const message = await Message.findById(messageId);
+    if (!isValidId(messageId as string)) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
+
+    const message = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    if (message.senderId.toString() !== userId.toString()) {
+    if (message.senderId !== userId) {
       return res.status(403).json({ error: "Can only delete your own messages" });
     }
 
-    const sender = await User.findById(message.senderId);
+    const sender = await prisma.user.findUnique({ where: { id: message.senderId } });
     const senderName = sender ? sender.fullName : "User";
     const deletionText = `This message was deleted by ${senderName}`;
 
-    message.isDeleted = true;
-    message.deletedAt = new Date();
-    message.text = deletionText;
-    message.image = null;
-    message.file = null;
-    message.replyTo = null;
-    message.reactions = new Map();
-    message.isPinned = false;
-
-    await message.save();
+    await prisma.message.update({
+      where: { id: message.id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        text: deletionText,
+        image: null,
+        file: null as any,
+        replyToId: null,
+        reactions: {} as any,
+        isPinned: false,
+      },
+    });
 
     // Emit to other user
-    const receiverId = message.receiverId;
-    if (receiverId) {
-      const otherUserSocketId = getReceiverSocketId(receiverId.toString());
+    if (message.receiverId) {
+      const otherUserSocketId = getReceiverSocketId(String(message.receiverId));
       if (otherUserSocketId) {
         io.to(otherUserSocketId).emit("messageDeleted", { messageId, text: deletionText });
       }
@@ -592,33 +605,41 @@ export const deleteMessage = async (req: AuthRequest, res: Response): Promise<an
 export const togglePinMessage = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { messageId } = req.params;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const message = await Message.findById(messageId);
+    if (!isValidId(messageId as string)) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
+
+    const message = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    message.isPinned = !message.isPinned;
-    message.pinnedAt = message.isPinned ? new Date() : undefined;
-    message.pinnedBy = message.isPinned ? userId : null;
+    const nextPinned = !message.isPinned;
+    const updated = await prisma.message.update({
+      where: { id: message.id },
+      data: {
+        isPinned: nextPinned,
+        pinnedAt: nextPinned ? new Date() : null,
+        pinnedBy: nextPinned ? userId : null,
+      },
+    });
 
-    await message.save();
+    // Emit to other user
+    const otherUserId = userId === message.senderId ? message.receiverId : message.senderId;
 
-    // Emit to both users
-    const receiverId = message.receiverId;
-    const senderId = message.senderId;
-    const otherUserId = userId.toString() === senderId.toString() ? receiverId : senderId;
-
-    const otherUserSocketId = getReceiverSocketId(otherUserId.toString());
-    if (otherUserSocketId) {
-      io.to(otherUserSocketId).emit("messagePinToggled", {
-        messageId,
-        isPinned: message.isPinned,
-      });
+    if (otherUserId) {
+      const otherUserSocketId = getReceiverSocketId(String(otherUserId));
+      if (otherUserSocketId) {
+        io.to(otherUserSocketId).emit("messagePinToggled", {
+          messageId,
+          isPinned: nextPinned,
+        });
+      }
     }
 
-    res.status(200).json(message);
+    res.status(200).json(toResponse(updated as any));
   } catch (error: any) {
     console.log("Error in togglePinMessage: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -629,20 +650,29 @@ export const togglePinMessage = async (req: AuthRequest, res: Response): Promise
 export const getPinnedMessages = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    const pinnedMessages = await Message.find({
-      isPinned: true,
-      $or: [
-        { senderId: myId, receiverId: userId as string },
-        { senderId: userId as string, receiverId: myId },
-      ],
-    })
-      .populate("senderId", "fullName profilePic")
-      .populate("receiverId", "fullName profilePic")
-      .sort({ pinnedAt: -1 });
+    if (!isValidId(userId as string)) {
+      res.status(400).json({ error: "Invalid user id" });
+      return;
+    }
 
-    res.status(200).json(pinnedMessages);
+    const pinnedMessages = await prisma.message.findMany({
+      where: {
+        isPinned: true,
+        OR: [
+          { senderId: myId, receiverId: String(userId) },
+          { senderId: String(userId), receiverId: myId },
+        ],
+      },
+      include: {
+        sender: { select: { id: true, fullName: true, profilePic: true } },
+        receiver: { select: { id: true, fullName: true, profilePic: true } },
+      },
+      orderBy: { pinnedAt: "desc" },
+    });
+
+    res.status(200).json(toList(pinnedMessages as any[]));
   } catch (error: any) {
     console.log("Error in getPinnedMessages: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -653,49 +683,56 @@ export const getPinnedMessages = async (req: AuthRequest, res: Response): Promis
 export const searchMessages = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const { query, sender, startDate, endDate, fileType } = req.query as { 
-      query?: string; 
+    const { query, sender, startDate, endDate, fileType } = req.query as {
+      query?: string;
       sender?: string;
       startDate?: string;
       endDate?: string;
       fileType?: string;
     };
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    const filterObj: any = {
-      $or: [
-        { senderId: myId, receiverId: userId as string },
-        { senderId: userId as string, receiverId: myId },
+    if (!isValidId(userId as string)) {
+      return res.status(400).json({ error: "Invalid user id" });
+    }
+
+    const createdAt: any = {};
+    if (startDate) createdAt.gte = new Date(startDate as string);
+    if (endDate) createdAt.lte = new Date(endDate as string);
+
+    const where: any = {
+      OR: [
+        { senderId: myId, receiverId: String(userId) },
+        { senderId: String(userId), receiverId: myId },
       ],
       isDeleted: false,
-      isExpired: { $ne: true },
+      isExpired: false,
+      ...(query ? { text: { contains: String(query), mode: "insensitive" } } : {}),
+      ...(sender ? { senderId: sender === "me" ? myId : String(userId) } : {}),
+      ...(Object.keys(createdAt).length > 0 ? { createdAt } : {}),
     };
 
-    if (query) {
-      filterObj.text = { $regex: query, $options: "i" };
-    }
+    const results = await prisma.message.findMany({
+      where,
+      include: {
+        sender: { select: { id: true, fullName: true, profilePic: true } },
+        receiver: { select: { id: true, fullName: true, profilePic: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
 
-    if (sender) {
-      filterObj.senderId = sender === "me" ? myId : (userId as string);
-    }
-
-    if (startDate || endDate) {
-      filterObj.createdAt = {};
-      if (startDate) filterObj.createdAt.$gte = new Date(startDate);
-      if (endDate) filterObj.createdAt.$lte = new Date(endDate);
-    }
-
+    let filtered = results;
     if (fileType) {
-      filterObj["file.type"] = { $regex: fileType, $options: "i" };
+      const ft = String(fileType).toLowerCase();
+      filtered = results.filter((m) => {
+        const f = m.file as any;
+        const t = f && typeof f === "object" ? String(f.type ?? "") : "";
+        return t.toLowerCase().includes(ft);
+      });
     }
 
-    const results = await Message.find(filterObj)
-      .populate("senderId", "fullName profilePic")
-      .populate("receiverId", "fullName profilePic")
-      .sort({ createdAt: -1 })
-      .limit(50);
-
-    res.status(200).json(results);
+    res.status(200).json(toList(filtered as any[]));
   } catch (error: any) {
     console.log("Error in searchMessages: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -706,16 +743,19 @@ export const setChatDisappearing = async (req: AuthRequest, res: Response): Prom
   try {
     const { userId } = req.params;
     const { expiryLabel, expiresAt } = req.body;
-    const me = await User.findById(req.user._id);
+    const myId = meId(req);
+    const me = await prisma.user.findUnique({ where: { id: myId } });
     if (!me) return res.status(404).json({ error: "User not found" });
 
-    const settings = me.chatSettings || new Map();
-    settings.set(userId as string, {
+    const settings = (((me.chatSettings as any) ?? {}) as Record<string, any>);
+    settings[String(userId)] = {
       expiryLabel,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
+    };
+    await prisma.user.update({
+      where: { id: myId },
+      data: { chatSettings: settings as any },
     });
-    me.chatSettings = settings;
-    await me.save();
 
     res.status(200).json({ expiryLabel, expiresAt });
   } catch (error: any) {
@@ -726,10 +766,19 @@ export const setChatDisappearing = async (req: AuthRequest, res: Response): Prom
 
 export const getLockedChats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const me = await User.findById(req.user._id).select("lockedChats");
+    const myId = meId(req);
+    const me = await prisma.user.findUnique({
+      where: { id: myId },
+      select: { lockedChats: true },
+    });
     const lockedIds = me?.lockedChats || [];
-    const chats = await User.find({ _id: { $in: lockedIds } }).select("fullName email profilePic");
-    res.status(200).json(chats);
+    const chats = lockedIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: lockedIds } },
+          select: { id: true, fullName: true, email: true, profilePic: true },
+        })
+      : [];
+    res.status(200).json(toList(chats as any[]));
   } catch (error: any) {
     console.log("Error in getLockedChats: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -740,22 +789,24 @@ export const lockChat = async (req: AuthRequest, res: Response): Promise<any> =>
   try {
     const { userId } = req.params;
     const { pin } = req.body;
-    if (!pin || pin.length < 4) {
+    const myId = meId(req);
+    if (!pin || String(pin).length < 4) {
       return res.status(400).json({ error: "PIN must be at least 4 digits" });
     }
 
-    const me = await User.findById(req.user._id);
+    const me = await prisma.user.findUnique({ where: { id: myId } });
     if (!me) return res.status(404).json({ error: "User not found" });
 
-    if (!me.lockedChats) me.lockedChats = [];
-    if (!me.lockPins) me.lockPins = new Map();
-
-    if (!me.lockedChats.some((id: any) => id.toString() === (userId as string))) {
-      me.lockedChats.push(userId as string);
+    const lockedChats = [...(me.lockedChats || [])];
+    if (!lockedChats.includes(String(userId))) {
+      lockedChats.push(String(userId));
     }
-    me.lockPins.set(userId as string, hashPin(pin));
-    me.markModified("lockPins");
-    await me.save();
+    const lockPins = (((me.lockPins as any) ?? {}) as Record<string, string>);
+    lockPins[String(userId)] = hashPin(String(pin));
+    await prisma.user.update({
+      where: { id: myId },
+      data: { lockedChats, lockPins: lockPins as any },
+    });
 
     res.status(200).json({ locked: true });
   } catch (error: any) {
@@ -768,12 +819,14 @@ export const unlockChat = async (req: AuthRequest, res: Response): Promise<any> 
   try {
     const { userId } = req.params;
     const { pin } = req.body;
+    const myId = meId(req);
 
-    const me = await User.findById(req.user._id);
+    const me = await prisma.user.findUnique({ where: { id: myId } });
     if (!me) return res.status(404).json({ error: "User not found" });
 
-    const storedHash = me.lockPins?.get(userId as string);
-    if (!storedHash || storedHash !== hashPin(pin)) {
+    const lockPins = (((me.lockPins as any) ?? {}) as Record<string, string>);
+    const storedHash = lockPins[String(userId)];
+    if (!storedHash || storedHash !== hashPin(String(pin))) {
       return res.status(403).json({ error: "Invalid PIN" });
     }
 
@@ -787,18 +840,24 @@ export const unlockChat = async (req: AuthRequest, res: Response): Promise<any> 
 export const markViewOnceOpened = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { messageId } = req.params;
-    const message = await Message.findById(messageId);
+
+    if (!isValidId(messageId as string)) {
+      return res.status(400).json({ error: "Invalid message id" });
+    }
+
+    const message = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!message) return res.status(404).json({ error: "Message not found" });
 
     if (!message.viewOnce || message.viewedOnce) {
-      return res.status(200).json(message);
+      return res.status(200).json(toResponse(message as any));
     }
 
-    message.viewedOnce = true;
-    message.viewedAt = new Date();
-    await message.save();
+    const updated = await prisma.message.update({
+      where: { id: message.id },
+      data: { viewedOnce: true, viewedAt: new Date() },
+    });
 
-    res.status(200).json(message);
+    res.status(200).json(toResponse(updated as any));
   } catch (error: any) {
     console.log("Error in markViewOnceOpened: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -810,26 +869,27 @@ export const forwardMessage = async (req: AuthRequest, res: Response): Promise<a
   try {
     const { messageId } = req.params;
     const { receiverId } = req.body;
-    const senderId = req.user._id;
+    const senderId = meId(req);
+    const sender = (req as any).user;
 
     if (!receiverId) {
       return res.status(400).json({ error: "Receiver ID is required" });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(messageId as string) || !mongoose.Types.ObjectId.isValid(receiverId as string)) {
+    if (!isValidId(messageId as string) || !isValidId(receiverId as string)) {
       return res.status(400).json({ error: "Invalid message or receiver ID" });
     }
 
-    if (senderId.toString() === receiverId.toString()) {
+    if (senderId === String(receiverId)) {
       return res.status(400).json({ error: "Cannot forward a message to yourself" });
     }
 
     // Check if users are friends (unless one is the Help Center)
     const helpCenterEmail = process.env.HELP_CENTER_EMAIL || "pansiluco@gmail.com";
-    const isHelpCenterSender = req.user.email === helpCenterEmail;
+    const isHelpCenterSender = sender?.email === helpCenterEmail;
     let isHelpCenterReceiver = false;
 
-    const receiverUser = await User.findById(receiverId);
+    const receiverUser = await prisma.user.findUnique({ where: { id: String(receiverId) } });
     if (!receiverUser) {
       return res.status(404).json({ error: "Receiver not found" });
     }
@@ -839,12 +899,14 @@ export const forwardMessage = async (req: AuthRequest, res: Response): Promise<a
     }
 
     if (!isHelpCenterSender && !isHelpCenterReceiver) {
-      const friendship = await Friendship.findOne({
-        status: "accepted",
-        $or: [
-          { requesterId: senderId, receiverId: receiverId },
-          { requesterId: receiverId, receiverId: senderId }
-        ]
+      const friendship = await prisma.friendship.findFirst({
+        where: {
+          status: "accepted",
+          OR: [
+            { requesterId: senderId, receiverId: String(receiverId) },
+            { requesterId: String(receiverId), receiverId: senderId },
+          ],
+        },
       });
 
       if (!friendship) {
@@ -852,29 +914,31 @@ export const forwardMessage = async (req: AuthRequest, res: Response): Promise<a
       }
     }
 
-    const originalMessage = await Message.findById(messageId);
+    const originalMessage = await prisma.message.findUnique({ where: { id: String(messageId) } });
     if (!originalMessage) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    const forwardedMessage = new Message({
-      senderId,
-      receiverId,
-      text: originalMessage.text,
-      image: originalMessage.image,
-      file: originalMessage.file,
-      forwardedFrom: originalMessage._id,
-      isRead: false,
+    const forwardedMessage = await prisma.message.create({
+      data: {
+        senderId,
+        receiverId: String(receiverId),
+        text: originalMessage.text,
+        image: originalMessage.image,
+        file: (originalMessage.file as any) ?? undefined,
+        forwardedFromId: originalMessage.id,
+        isRead: false,
+      },
     });
 
-    await forwardedMessage.save();
+    const out = toResponse(forwardedMessage as any);
 
-    const receiverSocketId = getReceiverSocketId(receiverId.toString());
+    const receiverSocketId = getReceiverSocketId(String(receiverId));
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", forwardedMessage);
+      io.to(receiverSocketId).emit("newMessage", out);
     }
 
-    res.status(201).json(forwardedMessage);
+    res.status(201).json(out);
   } catch (error: any) {
     console.error("Error in forwardMessage: ", error);
     res.status(500).json({ error: "Internal server error" });
@@ -885,17 +949,16 @@ export const forwardMessage = async (req: AuthRequest, res: Response): Promise<a
 export const updateUserStatus = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { status, statusMessage } = req.body;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        status,
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: status as any,
         statusMessage: statusMessage || "",
         lastSeen: new Date(),
       },
-      { new: true }
-    ).select("-password");
+    });
 
     // Broadcast status change
     io.emit("userStatusChanged", {
@@ -904,7 +967,8 @@ export const updateUserStatus = async (req: AuthRequest, res: Response): Promise
       statusMessage,
     });
 
-    res.status(200).json(user);
+    const { password: _pw, ...safe } = updated as any;
+    res.status(200).json(toResponse(safe as any));
   } catch (error: any) {
     console.log("Error in updateUserStatus: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -916,13 +980,20 @@ export const getUserStatus = async (req: Request, res: Response): Promise<any> =
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId).select("status statusMessage lastSeen");
+    if (!isValidId(userId as string)) {
+      return res.status(400).json({ error: "Invalid user id" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: String(userId) },
+      select: { id: true, status: true, statusMessage: true, lastSeen: true },
+    });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user);
+    res.status(200).json(toResponse(user as any));
   } catch (error: any) {
     console.log("Error in getUserStatus: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -932,8 +1003,26 @@ export const getUserStatus = async (req: Request, res: Response): Promise<any> =
 // Archive chat
 export const getCommunityData = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
-    const me = await User.findById(req.user._id).select("communityIds subscribedChannels") as any;
-    res.status(200).json({ communityIds: me?.communityIds || [], subscribedChannels: me?.subscribedChannels || [] });
+    const myId = meId(req);
+    const communities = await prisma.community.findMany({
+      where: { OR: [{ ownerId: myId }, { admins: { has: myId } }] },
+      select: { id: true },
+    });
+    const memberWorkspaces = await prisma.workspace.findMany({
+      where: { members: { has: myId } },
+      select: { id: true },
+    });
+    const wsIds = memberWorkspaces.map((w) => w.id);
+    const channels = wsIds.length > 0
+      ? await prisma.channel.findMany({
+          where: { workspaceId: { in: wsIds } },
+          select: { id: true },
+        })
+      : [];
+    res.status(200).json({
+      communityIds: communities.map((c) => c.id),
+      subscribedChannels: channels.map((c) => c.id),
+    });
   } catch (error: any) {
     console.log("Error in getCommunityData: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -943,24 +1032,21 @@ export const getCommunityData = async (req: AuthRequest, res: Response): Promise
 export const toggleArchiveChat = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    const user = await User.findById(myId);
+    const user = await prisma.user.findUnique({ where: { id: myId } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user.archivedChats) {
-      user.archivedChats = [];
-    }
-
-    const chatIndex = user.archivedChats.findIndex(id => id.toString() === (userId as string));
+    const archivedChats = [...(user.archivedChats || [])];
+    const chatIndex = archivedChats.indexOf(String(userId));
 
     if (chatIndex > -1) {
-      user.archivedChats.splice(chatIndex, 1);
+      archivedChats.splice(chatIndex, 1);
     } else {
-      user.archivedChats.push(userId as string as any);
+      archivedChats.push(String(userId));
     }
 
-    await user.save();
+    await prisma.user.update({ where: { id: myId }, data: { archivedChats } });
     res.status(200).json({ archived: chatIndex === -1 });
   } catch (error: any) {
     console.log("Error in toggleArchiveChat: ", error.message);
@@ -972,24 +1058,21 @@ export const toggleArchiveChat = async (req: AuthRequest, res: Response): Promis
 export const togglePinChat = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    const user = await User.findById(myId);
+    const user = await prisma.user.findUnique({ where: { id: myId } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user.pinnedChats) {
-      user.pinnedChats = [];
-    }
-
-    const chatIndex = user.pinnedChats.findIndex(id => id.toString() === (userId as string));
+    const pinnedChats = [...(user.pinnedChats || [])];
+    const chatIndex = pinnedChats.indexOf(String(userId));
 
     if (chatIndex > -1) {
-      user.pinnedChats.splice(chatIndex, 1);
+      pinnedChats.splice(chatIndex, 1);
     } else {
-      user.pinnedChats.push(userId as string as any);
+      pinnedChats.push(String(userId));
     }
 
-    await user.save();
+    await prisma.user.update({ where: { id: myId }, data: { pinnedChats } });
     res.status(200).json({ pinned: chatIndex === -1 });
   } catch (error: any) {
     console.log("Error in togglePinChat: ", error.message);
@@ -1001,24 +1084,21 @@ export const togglePinChat = async (req: AuthRequest, res: Response): Promise<an
 export const toggleMuteChat = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    const user = await User.findById(myId);
+    const user = await prisma.user.findUnique({ where: { id: myId } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user.mutedChats) {
-      user.mutedChats = [];
-    }
-
-    const chatIndex = user.mutedChats.findIndex(id => id.toString() === (userId as string));
+    const mutedChats = [...(user.mutedChats || [])];
+    const chatIndex = mutedChats.indexOf(String(userId));
 
     if (chatIndex > -1) {
-      user.mutedChats.splice(chatIndex, 1);
+      mutedChats.splice(chatIndex, 1);
     } else {
-      user.mutedChats.push(userId as string as any);
+      mutedChats.push(String(userId));
     }
 
-    await user.save();
+    await prisma.user.update({ where: { id: myId }, data: { mutedChats } });
     res.status(200).json({ muted: chatIndex === -1 });
   } catch (error: any) {
     console.log("Error in toggleMuteChat: ", error.message);
@@ -1030,17 +1110,19 @@ export const toggleMuteChat = async (req: AuthRequest, res: Response): Promise<a
 export const clearChatHistory = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { userId } = req.params;
-    const myId = req.user._id;
+    const myId = meId(req);
 
-    await Message.deleteMany({
-      $or: [
-        { senderId: myId, receiverId: userId as string },
-        { senderId: userId as string, receiverId: myId },
-      ],
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: myId, receiverId: String(userId) },
+          { senderId: String(userId), receiverId: myId },
+        ],
+      },
     });
 
     // Emit to other user
-    const otherUserSocketId = getReceiverSocketId(userId as string);
+    const otherUserSocketId = getReceiverSocketId(String(userId));
     if (otherUserSocketId) {
       io.to(otherUserSocketId).emit("chatCleared");
     }
@@ -1056,15 +1138,15 @@ export const clearChatHistory = async (req: AuthRequest, res: Response): Promise
 export const updateTheme = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { theme } = req.body;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { theme },
-      { new: true }
-    ).select("-password");
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { theme },
+    });
 
-    res.status(200).json(user);
+    const { password: _pw, ...safe } = updated as any;
+    res.status(200).json(toResponse(safe as any));
   } catch (error: any) {
     console.log("Error in updateTheme: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -1075,18 +1157,17 @@ export const updateTheme = async (req: AuthRequest, res: Response): Promise<any>
 export const setChatBackground = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const { chatUserId, backgroundUrl } = req.body;
-    const userId = req.user._id;
+    const userId = meId(req);
 
-    const user = await User.findById(userId) as any;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user.chatBackgrounds) {
-      user.chatBackgrounds = new Map();
-    }
-
-    user.chatBackgrounds.set(chatUserId, backgroundUrl);
-    user.markModified("chatBackgrounds");
-    await user.save();
+    const settings = (((user.chatSettings as any) ?? {}) as Record<string, any>);
+    settings[`background:${String(chatUserId)}`] = backgroundUrl;
+    await prisma.user.update({
+      where: { id: userId },
+      data: { chatSettings: settings as any },
+    });
 
     res.status(200).json({ message: "Background updated" });
   } catch (error: any) {
@@ -1100,71 +1181,94 @@ export const exportChat = async (req: AuthRequest, res: Response): Promise<any> 
   try {
     const { userId } = req.params;
     const { format = 'json', includeDeleted = false } = req.query as { format?: string; includeDeleted?: string | boolean };
-    const loggedInUserId = req.user._id;
+    const loggedInUserId = meId(req);
 
-    // Verify the user is part of this chat
-    if (loggedInUserId.toString() !== userId && req.user.role !== 'admin') {
-      return res.status(403).json({ error: "You can only export your own chats" });
+    if (!isValidId(userId as string)) {
+      return res.status(400).json({ error: "Invalid user id" });
     }
 
-    // Get all messages between these users
-    const messages = await Message.find({
-      $or: [
-        { senderId: loggedInUserId, receiverId: userId as string },
-        { senderId: userId as string, receiverId: loggedInUserId },
+    const includeDel = includeDeleted === 'true' || includeDeleted === true;
+
+    // Get messages between these users (paginated, max 500)
+    const where: any = {
+      OR: [
+        { senderId: loggedInUserId, receiverId: String(userId) },
+        { senderId: String(userId), receiverId: loggedInUserId },
       ],
-      ...(includeDeleted === 'true' || includeDeleted === true ? {} : { isDeleted: false }),
-    })
-      .sort({ createdAt: 1 })
-      .populate("senderId", "fullName email")
-      .populate("receiverId", "fullName email")
-      .populate("replyTo", "text senderId")
-      .populate("forwardedFrom", "text senderId");
+      ...(includeDel ? {} : { isDeleted: false }),
+    };
+    const messages = await prisma.message.findMany({
+      where,
+      orderBy: { createdAt: "asc" },
+      take: 500,
+      include: {
+        sender: { select: { id: true, fullName: true, email: true } },
+        receiver: { select: { id: true, fullName: true, email: true } },
+        replyTo: { select: { id: true, text: true, senderId: true } },
+      },
+    });
 
     // Get user info for the chat
-    const chatUser = await User.findById(userId).select("fullName email");
+    const chatUser = await prisma.user.findUnique({
+      where: { id: String(userId) },
+      select: { id: true, fullName: true, email: true },
+    });
     if (!chatUser) return res.status(404).json({ error: "Chat partner not found" });
 
+    const fwdIds = [...new Set(messages.map((m) => m.forwardedFromId).filter((v): v is string => !!v))];
+    const fwdRows = fwdIds.length > 0
+      ? await prisma.message.findMany({
+          where: { id: { in: fwdIds } },
+          select: { id: true, text: true, senderId: true },
+        })
+      : [];
+    const fwdMap = new Map(fwdRows.map((m) => [m.id, m]));
+
+    const chatWith = toResponse(chatUser as any) as any;
     const exportData: any = {
       exportedAt: new Date().toISOString(),
       chatWith: {
-        id: chatUser._id,
+        id: chatWith._id,
         name: chatUser.fullName,
         email: chatUser.email,
       },
       totalMessages: messages.length,
-      messages: messages.map((msg: any) => ({
-        id: msg._id,
-        timestamp: msg.createdAt,
-        sender: {
-          id: msg.senderId._id,
-          name: msg.senderId.fullName,
-          email: msg.senderId.email,
-        },
-        text: msg.text,
-        image: msg.image,
-        file: msg.file,
-        isEdited: msg.isEdited,
-        editedAt: msg.editedAt,
-        editHistory: msg.editHistory,
-        isDeleted: msg.isDeleted,
-        deletedAt: msg.deletedAt,
-        isPinned: msg.isPinned,
-        pinnedAt: msg.pinnedAt,
-        reactions: Object.fromEntries(msg.reactions || new Map()),
-        replyTo: msg.replyTo ? {
-          id: msg.replyTo._id,
-          text: msg.replyTo.text,
-          sender: msg.replyTo.senderId?.fullName,
-        } : null,
-        forwardedFrom: msg.forwardedFrom ? {
-          id: msg.forwardedFrom._id,
-          text: msg.forwardedFrom.text,
-          sender: msg.forwardedFrom.senderId?.fullName,
-        } : null,
-        isRead: msg.isRead,
-        readAt: msg.readAt,
-      })),
+      messages: messages.map((msg: any) => {
+        const r = toResponse(msg as any) as any;
+        const snd = msg.sender as any;
+        const replyTo = msg.replyTo as any;
+        const fwd = msg.forwardedFromId ? (fwdMap.get(msg.forwardedFromId) as any) : null;
+        return {
+          id: r._id,
+          timestamp: msg.createdAt,
+          sender: snd
+            ? { id: snd.id, name: snd.fullName, email: snd.email }
+            : { id: msg.senderId, name: "Unknown", email: "" },
+          text: msg.text,
+          image: msg.image,
+          file: msg.file,
+          isEdited: msg.isEdited,
+          editedAt: msg.editedAt,
+          editHistory: msg.editHistory,
+          isDeleted: msg.isDeleted,
+          deletedAt: msg.deletedAt,
+          isPinned: msg.isPinned,
+          pinnedAt: msg.pinnedAt,
+          reactions: ((msg.reactions as any) ?? {}),
+          replyTo: replyTo ? {
+            id: replyTo.id,
+            text: replyTo.text,
+            sender: replyTo.senderId,
+          } : null,
+          forwardedFrom: fwd ? {
+            id: fwd.id,
+            text: fwd.text,
+            sender: fwd.senderId,
+          } : null,
+          isRead: msg.isRead,
+          readAt: msg.readAt,
+        };
+      }),
     };
 
     // Format the response based on requested format

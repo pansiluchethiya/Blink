@@ -10,8 +10,8 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "http://localhost:5001",
-      "https://Blink.koyeb.app",
-      "https://Blink-app.pages.dev"
+      "https://blink.koyeb.app",
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ],
     credentials: true,
   },
