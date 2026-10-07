@@ -10,13 +10,13 @@ const UserProfilePanel = ({ user, onClose, isOpen }) => {
   if (!user || !isOpen) return null;
 
   // Filter Shared Media (Images, Videos)
-  const mediaMessages = messages.filter(msg => 
-    !msg.isDeleted && (msg.image || (msg.file && (msg.file.type.startsWith("image/") || msg.file.type.startsWith("video/"))))
+  const mediaMessages = messages.filter(msg =>
+    !msg.isDeleted && (msg.image || (msg.file && (msg.file.type?.startsWith("image/") || msg.file.type?.startsWith("video/"))))
   );
 
   // Filter Shared Docs & Links
-  const docMessages = messages.filter(msg => 
-    !msg.isDeleted && msg.file && !msg.file.type.startsWith("image/") && !msg.file.type.startsWith("video/")
+  const docMessages = messages.filter(msg =>
+    !msg.isDeleted && msg.file && !msg.file.type?.startsWith("image/") && !msg.file.type?.startsWith("video/")
   );
 
   const linkRegex = /(https?:\/\/[^\s<]+[^.,:;"'!)\]\s])/;

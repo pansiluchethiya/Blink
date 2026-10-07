@@ -18,6 +18,9 @@ import { Toaster } from "react-hot-toast";
 import ErrorModal from "./components/ErrorModal";
 import CommandPalette from "./components/CommandPalette";
 import ImageLightbox from "./components/ImageLightbox";
+import OfflineBar from "./components/OfflineBar";
+import UpdatePrompt from "./components/UpdatePrompt";
+import InstallPrompt from "./components/InstallPrompt";
 import { ContextMenuProvider } from "./components/ContextMenu";
 import ThemeProvider from "./lib/ThemeProvider";
 
@@ -135,6 +138,9 @@ const App: React.FC = () => {
           <ErrorModal error={currentError?.error} onClose={clearError} onRetry={currentError?.onRetry ? retryCurrentError : null} />
           <CommandPalette />
           <ImageLightbox />
+          <OfflineBar />
+          <UpdatePrompt />
+          <InstallPrompt />
         </div>
       </ContextMenuProvider>
     </ThemeProvider>

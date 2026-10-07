@@ -24,10 +24,12 @@ import {
   HelpCircle,
   TrendingUp,
   Loader,
-  Palette
+  Palette,
+  Sticker as StickerIcon
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ChatThemePicker from "./ChatThemePicker";
+import GifPicker from "./GifPicker";
 import Avatar from "./Avatar";
 
 // Date formatting helper
@@ -72,6 +74,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
   const { authUser, socket } = useAuthStore();
 
   const [text, setText] = useState("");
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -222,9 +225,22 @@ const WorkspaceChat = ({ onBurgerClick }) => {
     setSelectedFile(null);
   };
 
+  // GIF / sticker pick -> send immediately with current text as caption
+  const handleGifPick = async (pick) => {
+    setShowGifPicker(false);
+    try {
+      await sendChannelMessage(selectedWorkspace._id, selectedChannelId, text, null, {
+        image: pick.image,
+        fileMeta: pick.file,
+      });
+      setText("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Submit Text/Image Channel Message
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = async (e) => {    e.preventDefault();
     if (!text.trim() && !selectedImage && !selectedFile) return;
 
     if (socket && selectedWorkspace && selectedChannelId) {
@@ -370,7 +386,18 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                               <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
 
+                            {/* Sticker (large, no bubble chrome) */}
+                            {msg.file?.kind === "sticker" && msg.image && (
+                              <img
+                                src={msg.file.preview || msg.image}
+                                alt={msg.file.alt || "Sticker"}
+                                className="w-40 h-40 object-contain drop-shadow-lg"
+                                loading="lazy"
+                              />
+                            )}
+
                             {/* Message Bubble */}
+                            {!(msg.file?.kind === "sticker" && !msg.text) && (
                             <div 
                               className={`p-3.5 rounded-2xl border text-sm font-medium shadow-sm transition duration-200 leading-relaxed ${
                                 isOwn 
@@ -381,7 +408,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                               {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
 
                               {/* Uploaded File preview inside chat */}
-                              {msg.file && (
+                              {msg.file?.url && msg.file?.name && (
                                 <div className="mt-2.5 flex items-center gap-2.5 p-2 rounded-xl bg-base-300/40 border border-base-300/80">
                                   <FileText className="w-8 h-8 text-primary" />
                                   <div className="flex flex-col min-w-0">
@@ -405,12 +432,13 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                               )}
                               
                               {/* Attached image preview */}
-                              {msg.image && (
+                              {msg.image && msg.file?.kind !== "sticker" && (
                                 <div className="mt-2.5 rounded-xl overflow-hidden border border-base-300 max-w-xs">
                                   <img src={msg.image} alt="Attachment" className="w-full h-auto object-cover" />
                                 </div>
                               )}
                             </div>
+                            )}
 
                             {/* Reactions panel */}
                             <div className="flex gap-1.5 flex-wrap mt-1.5">
@@ -532,6 +560,22 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                   className="hidden"
                   onChange={handleFileChange}
                 />
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowGifPicker((v) => !v)}
+                    className="size-10 flex items-center justify-center rounded-xl bg-base-300 hover:bg-base-300 text-base-content/60 hover:text-base-content transition focus:ring-2 focus:ring-primary"
+                    title="GIFs & Stickers"
+                  >
+                    <StickerIcon className="w-5 h-5" />
+                  </button>
+                  {showGifPicker && (
+                    <div className="absolute bottom-12 left-0 z-50">
+                      <GifPicker onPick={handleGifPick} onClose={() => setShowGifPicker(false)} />
+                    </div>
+                  )}
+                </div>
 
                 <input
                   type="text"

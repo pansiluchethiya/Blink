@@ -40,10 +40,14 @@ export interface IMessage {
   text?: string;
   image?: string;
   file?: {
-    url: string;
-    name: string;
-    type: string;
-    size: number;
+    url?: string;
+    name?: string;
+    type?: string;
+    size?: number;
+    kind?: string;
+    pack?: string;
+    alt?: string;
+    preview?: string;
   };
   isRead: boolean;
   readAt?: string;

@@ -1,11 +1,12 @@
 import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X, Paperclip, Loader, Mic, Square, Smile, Plus, MoreHorizontal, ChevronRight } from "lucide-react";
+import { Send, X, Paperclip, Loader, Mic, Smile, Sticker } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/useAuthStore";
 import { useFriendStore } from "../store/useFriendStore";
-import { Button, IconButton } from "./ui";
+import { IconButton } from "./ui";
 import EmojiPicker from "./EmojiPicker";
+import GifPicker, { type GifPickerPick } from "./GifPicker";
 import ReplyPreview from "./ReplyPreview";
 import EditingIndicator from "./EditingIndicator";
 import { EMOJIS, HELP_CENTER_EMAIL } from "../constants";
@@ -13,7 +14,6 @@ import { EMOJIS, HELP_CENTER_EMAIL } from "../constants";
 const MessageInput = () => {
   const [text, setText] = useState("");
   const sendOnEnter = useChatStore(state => state.chatSettings?.sendOnEnter ?? true);
-  const setChatSetting = useChatStore(state => state.setChatSetting);
   const [imagePreview, setImagePreview] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [isViewOnce, setIsViewOnce] = useState(false);
@@ -21,8 +21,9 @@ const MessageInput = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [attachmentMeta, setAttachmentMeta] = useState<null | { kind: string; pack?: string; alt?: string; preview?: string }>(null);
   const [emojiSuggestions, setEmojiSuggestions] = useState([]);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -42,11 +43,13 @@ const MessageInput = () => {
         reader.onloadend = () => {
           setImagePreview(reader.result);
           setFilePreview(null);
+          setAttachmentMeta(null);
         };
         reader.readAsDataURL(pendingAttachment);
       } else {
         setFilePreview(pendingAttachment);
         setImagePreview(null);
+        setAttachmentMeta(null);
       }
       setPendingAttachment(null);
     }
@@ -125,7 +128,7 @@ const MessageInput = () => {
     if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
     if (file.size > 50 * 1024 * 1024) { toast.error("File size must be less than 50MB"); return; }
     const reader = new FileReader();
-    reader.onloadend = () => { setImagePreview(reader.result); setFilePreview(null); };
+    reader.onloadend = () => { setImagePreview(reader.result); setFilePreview(null); setAttachmentMeta(null); };
     reader.readAsDataURL(file);
   };
 
@@ -134,13 +137,23 @@ const MessageInput = () => {
     if (file.size > 50 * 1024 * 1024) { toast.error("File size must be less than 50MB"); return; }
     setFilePreview(file);
     setImagePreview(null);
+    setAttachmentMeta(null);
   };
 
   const removeAttachment = () => {
     setImagePreview(null);
     setFilePreview(null);
+    setAttachmentMeta(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (imageInputRef.current) imageInputRef.current.value = "";
+  };
+
+  const handleGifPick = (pick: GifPickerPick) => {
+    setImagePreview(pick.image);
+    setFilePreview(null);
+    setAttachmentMeta(pick.file);
+    setShowGifPicker(false);
+    setIsViewOnce(false);
   };
 
   const handleTextChange = (e) => {
@@ -188,6 +201,7 @@ const MessageInput = () => {
       if (text.trim()) formData.append("text", text.trim());
       if (imagePreview) formData.append("image", imagePreview);
       if (filePreview) formData.append("file", filePreview);
+      if (attachmentMeta && imagePreview) formData.append("fileMeta", JSON.stringify(attachmentMeta));
       if (replyingToMessage) formData.append("replyTo", replyingToMessage._id);
 
       if (editingMessageId) {
@@ -201,6 +215,7 @@ const MessageInput = () => {
       if (selectedUser) setDraft(selectedUser._id, "");
       setImagePreview(null);
       setFilePreview(null);
+      setAttachmentMeta(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (imageInputRef.current) imageInputRef.current.value = "";
     } catch (error) {
@@ -279,7 +294,32 @@ const MessageInput = () => {
               <input type="checkbox" checked={isViewOnce} onChange={(e) => setIsViewOnce(e.target.checked)} className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary/20" />
               View once media
             </label>
+            {imagePreview && (
+              <label className="inline-flex items-center gap-2 text-[12px] text-base-content/50 font-bold cursor-pointer hover:text-base-content transition-colors">
+                <input
+                  type="checkbox"
+                  checked={attachmentMeta?.kind === "sticker"}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setAttachmentMeta((prev) => ({ ...(prev ?? {}), kind: "sticker" }));
+                    } else {
+                      setAttachmentMeta((prev) => {
+                        if (!prev) return null;
+                        if (prev.kind === "gif") return prev;
+                        return null;
+                      });
+                    }
+                  }}
+                  className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary/20"
+                />
+                Send as sticker
+              </label>
+            )}
           </div>
+        )}
+
+        {showGifPicker && (
+          <GifPicker onPick={handleGifPick} onClose={() => setShowGifPicker(false)} />
         )}
 
         <div className="flex items-end gap-3">
@@ -291,6 +331,13 @@ const MessageInput = () => {
               className="text-base-content/50 hover:text-base-content hover:bg-base-200 rounded-full"
             >
               <Paperclip size={22} />
+            </IconButton>
+            <IconButton
+              size="lg"
+              onClick={() => { setShowGifPicker((v) => !v); setShowEmojiPicker(false); }}
+              className={`${showGifPicker ? "text-primary" : "text-base-content/50"} hover:text-base-content hover:bg-base-200 rounded-full`}
+            >
+              <Sticker size={22} />
             </IconButton>
           </div>
 

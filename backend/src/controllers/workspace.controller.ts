@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import { prisma, toResponse, toList, isValidId } from "../lib/prisma.js";
 import cloudinary from "../lib/cloudinary.js";
+import { resolveImageUrl, parseFileMeta } from "../lib/attachments.js";
 import { io } from "../lib/socket.js";
 import multer from "multer";
 import catchAsync from "../utils/catchAsync.js";
@@ -393,7 +394,7 @@ export const getChannelMessages = catchAsync(async (req: AuthRequest, res: Respo
 export const sendChannelMessage = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     const { workspaceId, channelId } = req.params;
-    const { text, image, replyTo } = req.body ?? {};
+    const { text, image, replyTo, file, fileMeta } = req.body ?? {};
     const senderId = meId(req);
 
     if (text && String(text).length > 1024) {
@@ -413,8 +414,7 @@ export const sendChannelMessage = catchAsync(
 
     let imageUrl = "";
     if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
+      imageUrl = (await resolveImageUrl(image)) ?? "";
     }
 
     let fileData: any = null;
@@ -434,6 +434,8 @@ export const sendChannelMessage = catchAsync(
         size: uploadedFile.size,
       };
     }
+    const meta = parseFileMeta(file ?? fileMeta);
+    if (meta) fileData = { ...(fileData ?? {}), ...meta };
 
     let replyToId: string | null = null;
     if (replyTo) {

@@ -156,6 +156,14 @@ const MessageContent = ({
     openMessageMenu(message._id, { top: e.clientY, left: e.clientX });
   };
 
+  const fileKind = message.file?.kind;
+  const isSticker = fileKind === "sticker";
+  const stickerSrc = message.image || (isSticker ? message.file?.url : undefined);
+  const stickerAlt = message.file?.alt || "Sticker";
+  const bubbleClasses = isSticker && stickerSrc && !message.isDeleted
+    ? `relative flex flex-col select-text px-1 py-1 bg-transparent border-none shadow-none ${isSelf ? "rounded-2xl rounded-tr-sm" : "rounded-2xl rounded-tl-sm"} message-bubble group/bubble`
+    : commonBubbleClasses;
+
   return (
     <>
       {/* Header: Sender name */}
@@ -182,7 +190,7 @@ const MessageContent = ({
       {/* Bubble Row */}
       <div className={`flex gap-2 items-end ${isSelf ? "justify-end" : ""}`}>
         <div
-          className={`${commonBubbleClasses}`}
+          className={`${bubbleClasses}`}
           onDoubleClick={handleDoubleClick}
           onTouchStart={message.isDeleted ? undefined : (e) => { e.stopPropagation(); handleLongPressStart?.(message._id); }}
           onTouchEnd={message.isDeleted ? undefined : handleLongPressEnd}
@@ -210,6 +218,37 @@ const MessageContent = ({
               message={message}
               onOpened={() => markViewOnceOpened(message._id)}
             />
+          ) : isSticker && stickerSrc ? (
+            <>
+              <img
+                src={stickerSrc}
+                alt={stickerAlt}
+                loading="lazy"
+                decoding="async"
+                className="w-40 h-40 object-contain bg-transparent drop-shadow-lg cursor-zoom-in"
+                onClick={(e) => { e.stopPropagation(); setLightboxImage(stickerSrc); }}
+              />
+              {message.text && (
+                <div className="flex flex-col">
+                  <div className="text-[15px] leading-[1.5] break-words font-medium pr-4 prose max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.text}
+                    </ReactMarkdown>
+                    {message.isEdited && !message.isDeleted && (
+                      <span className="text-[10px] opacity-70 ml-1.5 font-normal">edited</span>
+                    )}
+                  </div>
+                  {!message.isDeleted && (() => {
+                    const urlRegex = /(https?:\/\/[^\s<]+[^.,:;"'!)\]\s])/;
+                    const match = message.text.match(urlRegex);
+                    if (match) {
+                      return <LinkPreview url={match[0]} isSelf={isSelf} />;
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
+            </>
           ) : (
             <>
               {message.image && (
@@ -222,9 +261,9 @@ const MessageContent = ({
                   onClick={(e) => { e.stopPropagation(); setLightboxImage(message.image); }}
                 />
               )}
-              {message.file && (
+              {message.file && message.file.url && fileKind !== "gif" && fileKind !== "sticker" && (
                 <div className="mb-1">
-                  {message.file.type.startsWith("image/") ? (
+                  {message.file.type?.startsWith("image/") ? (
                     <img
                       src={message.file.url}
                       alt={message.file.name}
@@ -233,11 +272,11 @@ const MessageContent = ({
                       className="max-w-full sm:max-w-[300px] rounded-xl object-cover shadow-sm cursor-zoom-in"
                       onClick={(e) => { e.stopPropagation(); setLightboxImage(message.file.url); }}
                     />
-                  ) : message.file.type.startsWith("video/") ? (
+                  ) : message.file.type?.startsWith("video/") ? (
                     <video controls className="max-w-full sm:max-w-[300px] rounded-xl shadow-sm">
                       <source src={message.file.url} type={message.file.type} />
                     </video>
-                  ) : message.file.type.startsWith("audio/") ? (
+                  ) : message.file.type?.startsWith("audio/") ? (
                     <div className={`p-2 rounded-xl min-w-[200px] ${isSelf ? "bg-black/10" : "bg-base-300/50"}`}>
                       <audio controls className="w-full h-8">
                         <source src={message.file.url} type={message.file.type} />
@@ -260,7 +299,7 @@ const MessageContent = ({
                       <div className="flex flex-col min-w-0">
                         <span className="text-sm font-semibold truncate max-w-[150px]">{message.file.name}</span>
                         <span className="text-[10px] opacity-70">
-                          {(message.file.size / 1024 / 1024).toFixed(2)} MB
+                          {((message.file.size ?? 0) / 1024 / 1024).toFixed(2)} MB
                         </span>
                       </div>
                     </a>

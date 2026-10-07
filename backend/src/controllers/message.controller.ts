@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma, toResponse, toList, isValidId } from "../lib/prisma.js";
 import cloudinary from "../lib/cloudinary.js";
+import { resolveImageUrl, parseFileMeta } from "../lib/attachments.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 import NotificationService from "../services/notification.service.js";
 import multer from "multer";
@@ -201,7 +202,7 @@ export const sendMessage = [
   upload.single("file"),
   async (req: any, res: Response): Promise<any> => {
     try {
-      const { text, image, replyTo, viewOnce, expiresAt } = req.body;
+      const { text, image, replyTo, viewOnce, expiresAt, file, fileMeta } = req.body;
       const { id: receiverId } = req.params;
       const senderId = String((req as any).user?._id ?? (req as any).user?.id);
       const sender = (req as any).user;
@@ -247,9 +248,8 @@ export const sendMessage = [
 
       let imageUrl: string | null = null;
       if (image) {
-        // Upload base64 image to cloudinary
-        const uploadResponse = await cloudinary.uploader.upload(image);
-        imageUrl = uploadResponse.secure_url;
+        // Remote GIF/sticker URLs pass through; base64 uploads go to Cloudinary
+        imageUrl = await resolveImageUrl(image);
       }
 
       let fileData: any = undefined;
@@ -266,6 +266,9 @@ export const sendMessage = [
           size: req.file.size,
         };
       }
+      // Sticker/GIF metadata (kind/pack/alt/preview) — merged onto uploads or stored alone
+      const meta = parseFileMeta(file ?? fileMeta);
+      if (meta) fileData = { ...(fileData ?? {}), ...meta };
 
       const replyToId = typeof replyTo === "string" && isValidId(replyTo) ? replyTo : undefined;
 

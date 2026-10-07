@@ -30,8 +30,8 @@ const ImageLightbox = () => {
     : (selectedChannelId ? (workspaceMessages[selectedChannelId] || []) : []);
 
   // Filter messages that contain images
-  const imageMessages = activeMessages.filter(msg => 
-    !msg.isDeleted && (msg.image || (msg.file && msg.file.type.startsWith("image/")))
+  const imageMessages = activeMessages.filter(msg =>
+    !msg.isDeleted && (msg.image || (msg.file && msg.file.type?.startsWith("image/")))
   );
 
   // Extract the image URLs

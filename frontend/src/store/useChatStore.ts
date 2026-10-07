@@ -86,7 +86,7 @@ interface ChatState {
   fetchChannelData: (workspaceId: string, channelId: string) => Promise<void>;
   createWorkspace: (name: string, icon?: string) => Promise<void>;
   createChannel: (workspaceId: string, name: string, type?: string) => Promise<void>;
-  sendChannelMessage: (workspaceId: string, channelId: string, text: string, file?: File | null) => Promise<void>;
+  sendChannelMessage: (workspaceId: string, channelId: string, text: string, file?: File | null, extra?: { image?: string; fileMeta?: Record<string, any> }) => Promise<void>;
   addChannelReaction: (channelId: string, messageId: string, emoji: string) => Promise<void>;
   createPoll: (workspaceId: string, channelId: string, question: string, optionLabels: string[]) => Promise<void>;
   voteInPoll: (workspaceId: string, channelId: string, pollId: string, optionId: string) => Promise<void>;
@@ -262,6 +262,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
     let fileSize = 0;
     let imagePreviewUrl = "";
     let replyTo = null;
+    let fileMeta: Record<string, any> | null = null;
+
+    const parseMeta = (v: unknown): Record<string, any> | null => {
+      if (!v) return null;
+      if (typeof v === "string") {
+        try {
+          const p = JSON.parse(v);
+          return p && typeof p === "object" ? p : null;
+        } catch {
+          return null;
+        }
+      }
+      if (typeof v === "object") {
+        if (typeof Blob !== "undefined" && v instanceof Blob) return null;
+        return v as Record<string, any>;
+      }
+      return null;
+    };
+
+    const isUploadable = (v: unknown): v is Blob =>
+      typeof Blob !== "undefined" && v instanceof Blob;
 
     const isFormData = messageData && typeof messageData.append === "function";
     if (isFormData) {
@@ -282,13 +303,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
       replyTo = messageData.get("replyTo") as string || null;
+      fileMeta = parseMeta(messageData.get("fileMeta"));
     } else {
       text = messageData.text || "";
       if (messageData.file) {
-        fileName = messageData.file.name;
-        fileType = messageData.file.type;
-        fileSize = messageData.file.size;
-        filePreviewUrl = URL.createObjectURL(messageData.file);
+        if (isUploadable(messageData.file)) {
+          fileName = messageData.file.name;
+          fileType = messageData.file.type;
+          fileSize = messageData.file.size;
+          filePreviewUrl = URL.createObjectURL(messageData.file);
+        } else if (typeof messageData.file === "object" && "kind" in messageData.file) {
+          fileMeta = messageData.file;
+        }
       }
       if (messageData.image) {
         if (typeof messageData.image === "string") {
@@ -298,6 +324,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
       replyTo = messageData.replyTo || null;
+      const extraMeta = parseMeta(messageData.fileMeta);
+      if (extraMeta) fileMeta = { ...(fileMeta ?? {}), ...extraMeta };
     }
 
     const tempMessage: IMessage = {
@@ -310,8 +338,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         url: filePreviewUrl,
         name: fileName,
         type: fileType,
-        size: fileSize
-      } : undefined,
+        size: fileSize,
+        ...(fileMeta ?? {}),
+      } : fileMeta ? {
+        ...(fileMeta as object),
+        url: (fileMeta as any).url ?? imagePreviewUrl ?? undefined,
+      } as IMessage["file"] : undefined,
       isRead: false,
       isEdited: false,
       isDeleted: false,
@@ -340,17 +372,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (messageData.replyTo) formData.append("replyTo", messageData.replyTo);
         if (messageData.viewOnce) formData.append("viewOnce", messageData.viewOnce);
         if (messageData.expiresAt) formData.append("expiresAt", messageData.expiresAt.toISOString());
+        if (fileMeta) formData.append("fileMeta", JSON.stringify(fileMeta));
         postData = formData;
       }
 
       const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, postData);
-      
-      const updatedMessages = get().messages.map(msg => 
-        msg._id === tempId ? res.data : msg
+
+      const serverMsg = res.data;
+      const finalMsg = fileMeta
+        ? {
+            ...serverMsg,
+            file: {
+              ...(serverMsg.file && typeof serverMsg.file === "object" ? serverMsg.file : {}),
+              ...(fileMeta as object),
+              url: (fileMeta as any).url ?? (serverMsg.file as any)?.url ?? serverMsg.image ?? imagePreviewUrl ?? undefined,
+            },
+          }
+        : serverMsg;
+      const updatedMessages = get().messages.map(msg =>
+        msg._id === tempId ? finalMsg : msg
       );
-      set({ 
-        messages: updatedMessages, 
-        users: get().users.map(u => u._id === selectedUser._id ? { ...u, lastMessage: res.data } : (u as any))
+      set({
+        messages: updatedMessages,
+        users: get().users.map(u => u._id === selectedUser._id ? { ...u, lastMessage: finalMsg } : (u as any))
       });
     } catch (error: any) {
       set({
@@ -1084,7 +1128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendChannelMessage: async (workspaceId, channelId, text, file = null) => {
+  sendChannelMessage: async (workspaceId, channelId, text, file = null, extra = {}) => {
   try {
     const authUser = useAuthStore.getState().authUser;
     if (!authUser) return;
@@ -1093,13 +1137,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       _id: tempId,
       senderId: authUser._id,
       text,
-      image: undefined,
+      image: extra.image,
       file: file ? {
         url: URL.createObjectURL(file),
         name: file.name,
         type: file.type,
         size: file.size
-      } : undefined,
+      } : extra.fileMeta ? { ...extra.fileMeta } : undefined,
       isRead: false,
       isEdited: false,
       isDeleted: false,
@@ -1127,6 +1171,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const formData = new FormData();
     formData.append("text", text || "");
     if (file) formData.append("file", file);
+    if (extra.image) formData.append("image", extra.image);
+    if (extra.fileMeta) formData.append("fileMeta", JSON.stringify(extra.fileMeta));
     const res = await axiosInstance.post(`/workspaces/${workspaceId}/messages/${channelId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
