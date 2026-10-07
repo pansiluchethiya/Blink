@@ -9,7 +9,6 @@ import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import { useAuthStore } from "./store/useAuthStore";
-import { useThemeStore } from "./store/useThemeStore";
 import { useErrorStore } from "./store/useErrorStore";
 import { useChatStore } from "./store/useChatStore";
 import { useFriendStore } from "./store/useFriendStore";
@@ -49,7 +48,6 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
 
 const App: React.FC = () => {
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
-  const { theme } = useThemeStore();
   const { currentError, clearError, retryCurrentError } = useErrorStore();
   const { toggleCommandPalette, setCommandPaletteOpen, setEditingMessage, setReplyingToMessage } = useChatStore();
   const { fetchFriends, fetchRequests, subscribeToFriendEvents, unsubscribeFromFriendEvents } = useFriendStore();
@@ -105,31 +103,12 @@ const App: React.FC = () => {
     }
   }, [authUser, socket, fetchFriends, fetchRequests, subscribeToFriendEvents, unsubscribeFromFriendEvents, subscribeToMessages, unsubscribeFromMessages, initWorkspaces]);
 
-  // Theme handling
-  useEffect(() => {
-    const root = document.documentElement;
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const applyTheme = () => {
-      const isDark = theme === "dark" || (theme === "system" && mediaQuery.matches);
-      if (isDark) {
-        root.classList.add("dark");
-        root.setAttribute("data-theme", "dark");
-      } else {
-        root.classList.remove("dark");
-        root.setAttribute("data-theme", "light");
-      }
-    };
-    applyTheme();
-    if (theme === "system") {
-      mediaQuery.addEventListener("change", applyTheme);
-      return () => mediaQuery.removeEventListener("change", applyTheme);
-    }
-  }, [theme]);
+  // Theme handling lives in ThemeProvider (lib/ThemeProvider.tsx).
 
   // Loading spinner while auth is being verified
   if (isCheckingAuth && !authUser) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+      <div className="flex items-center justify-center h-screen bg-base-100 text-base-content">
         <Loader className="size-10 animate-spin text-primary" />
       </div>
     );
@@ -139,7 +118,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <ContextMenuProvider>
-        <div className="min-h-screen bg-background dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+        <div className="min-h-screen bg-base-100 text-base-content transition-colors duration-200">
           {!(authUser && isHomePage) && <Navbar />}
           <RequireAuth>
             <Routes>

@@ -1,4 +1,4 @@
-import { useThemeStore } from "../store/useThemeStore";
+import { useThemeStore, BLINK_LIGHT, BLINK_DARK } from "../store/useThemeStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 import { Send, MessageSquare, Users, AtSign, Shield, Sun, Moon, Laptop } from "lucide-react";
@@ -11,7 +11,7 @@ const ChatSendToggle = () => {
     <button
       type="button"
       onClick={() => setChatSetting('sendOnEnter', !sendOnEnter)}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-250 ease-in-out focus:outline-none ${sendOnEnter ? "bg-blue-500" : "bg-slate-200 dark:bg-slate-700"}`}
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-250 ease-in-out focus:outline-none ${sendOnEnter ? "bg-primary" : "bg-slate-200 dark:bg-slate-700"}`}
     >
       <span
         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${sendOnEnter ? "translate-x-5" : "translate-x-0"}`}
@@ -68,10 +68,10 @@ const SettingsPage = () => {
                 {/* Light Theme Option Card */}
                 <button
                   type="button"
-                  onClick={() => setTheme("light")}
+                  onClick={() => setTheme(BLINK_LIGHT)}
                   className={`flex flex-col items-center justify-between p-4 rounded-2xl border text-left transition-all duration-200 ${
-                    theme === "light"
-                      ? "border-blue-500 bg-blue-500/5 dark:bg-blue-400/5"
+                    theme === BLINK_LIGHT
+                      ? "border-primary bg-primary/5"
                       : "border-slate-200 dark:border-slate-700 bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
                   }`}
                 >
@@ -95,10 +95,10 @@ const SettingsPage = () => {
                 {/* Dark Theme Option Card */}
                 <button
                   type="button"
-                  onClick={() => setTheme("dark")}
+                  onClick={() => setTheme(BLINK_DARK)}
                   className={`flex flex-col items-center justify-between p-4 rounded-2xl border text-left transition-all duration-200 ${
-                    theme === "dark"
-                      ? "border-blue-500 bg-blue-500/5 dark:bg-blue-400/5"
+                    theme === BLINK_DARK
+                      ? "border-primary bg-primary/5"
                       : "border-slate-200 dark:border-slate-700 bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
                   }`}
                 >
@@ -108,7 +108,7 @@ const SettingsPage = () => {
                     </div>
                     <div>
                       <p className="font-bold text-sm text-slate-800 dark:text-slate-100">Dark</p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate max-w-[80px]">Neon glow</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate max-w-[80px]">Pure black</p>
                     </div>
                   </div>
                   {/* Miniature mockup dark chat list */}
@@ -125,7 +125,7 @@ const SettingsPage = () => {
                   onClick={() => setTheme("system")}
                   className={`flex flex-col items-center justify-between p-4 rounded-2xl border text-left transition-all duration-200 ${
                     theme === "system"
-                      ? "border-blue-500 bg-blue-500/5 dark:bg-blue-400/5"
+                      ? "border-primary bg-primary/5"
                       : "border-slate-200 dark:border-slate-700 bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
                   }`}
                 >

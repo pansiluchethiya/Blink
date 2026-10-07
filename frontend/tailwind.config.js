@@ -1,63 +1,123 @@
+import daisyui from "daisyui";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+      },
+      // Legacy color aliases — all resolve to the active daisyUI theme so old
+      // classes keep rendering (theme-aware) until components are migrated.
+      // New code should use daisyUI tokens directly (bg-base-100, text-base-content, ...).
       colors: {
         primary: {
-          DEFAULT: '#0D9488', // teal-600
-          dark: '#0F766E', // teal-700
-          foreground: '#ffffff',
-          'high-contrast': '#00FF00', // high contrast green
+          DEFAULT: "oklch(var(--p) / <alpha-value>)",
+          dark: "oklch(var(--p) / <alpha-value>)",
+          foreground: "oklch(var(--pc) / <alpha-value>)",
+          "high-contrast": "#000000",
         },
         surface: {
-          DEFAULT: '#ffffff',
-          dark: '#020617',
-          'high-contrast': '#000000',
+          DEFAULT: "oklch(var(--b1) / <alpha-value>)",
+          dark: "oklch(var(--b1) / <alpha-value>)",
+          "high-contrast": "#000000",
         },
         background: {
-          DEFAULT: '#ffffff',
-          dark: '#020617',
-          'high-contrast': '#000000',
+          DEFAULT: "oklch(var(--b1) / <alpha-value>)",
+          dark: "oklch(var(--b1) / <alpha-value>)",
+          "high-contrast": "#000000",
         },
         border: {
-          DEFAULT: '#f1f5f9',
-          dark: '#1e293b',
-          'high-contrast': '#FFFFFF',
+          DEFAULT: "oklch(var(--b3) / <alpha-value>)",
+          dark: "oklch(var(--b3) / <alpha-value>)",
+          "high-contrast": "#FFFFFF",
         },
         success: {
-          DEFAULT: '#00FF88',
-          foreground: '#ffffff',
-          'high-contrast': '#00FF00',
+          DEFAULT: "oklch(var(--su) / <alpha-value>)",
+          foreground: "oklch(var(--suc) / <alpha-value>)",
+          "high-contrast": "#00FF00",
         },
         warning: {
-          DEFAULT: '#f59e0b',
-          foreground: '#ffffff',
-          'high-contrast': '#FFFF00',
+          DEFAULT: "oklch(var(--wa) / <alpha-value>)",
+          foreground: "oklch(var(--wac) / <alpha-value>)",
+          "high-contrast": "#FFFF00",
         },
         danger: {
-          DEFAULT: '#ef4444',
-          foreground: '#ffffff',
-          'high-contrast': '#FF0000',
+          DEFAULT: "oklch(var(--er) / <alpha-value>)",
+          foreground: "oklch(var(--erc) / <alpha-value>)",
+          "high-contrast": "#FF0000",
         },
         text: {
-          DEFAULT: '#0f172a',
-          dark: '#f1f5f9',
-          'high-contrast': '#FFFFFF',
-        }
+          DEFAULT: "oklch(var(--bc) / <alpha-value>)",
+          dark: "oklch(var(--bc) / <alpha-value>)",
+          "high-contrast": "#FFFFFF",
+        },
       },
       borderRadius: {
-        'xl': '1rem',
-        '2xl': '1.5rem',
-        '3xl': '2rem',
+        xl: "1rem",
+        "2xl": "1.5rem",
+        "3xl": "2rem",
       },
       boxShadow: {
-        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-        'elevated': '0 4px 12px rgba(0, 0, 0, 0.08)',
-        'premium': '0 10px 15px -3px rgba(0, 212, 255, 0.2), 0 4px 6px -2px rgba(0, 128, 255, 0.1)',
-      }
+        soft: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+        elevated: "0 4px 12px rgba(0, 0, 0, 0.08)",
+      },
     },
   },
-  plugins: [],
+  plugins: [daisyui],
+  daisyui: {
+    themes: [
+      {
+        "blink-light": {
+          primary: "#000000",
+          secondary: "#525252",
+          accent: "#a3a3a3",
+          neutral: "#171717",
+          "base-100": "#ffffff",
+          "base-200": "#f5f5f5",
+          "base-300": "#e5e5e5",
+          info: "#2563eb",
+          success: "#16a34a",
+          warning: "#d97706",
+          error: "#dc2626",
+        },
+      },
+      {
+        "blink-dark": {
+          primary: "#ffffff",
+          secondary: "#a3a3a3",
+          accent: "#737373",
+          neutral: "#0a0a0a",
+          "base-100": "#0a0a0a",
+          "base-200": "#141414",
+          "base-300": "#222222",
+          info: "#60a5fa",
+          success: "#4ade80",
+          warning: "#fbbf24",
+          error: "#f87171",
+        },
+      },
+      // Curated per-chat themes: restrained half + expressive half.
+      "black",
+      "lofi",
+      "luxury",
+      "wireframe",
+      "nord",
+      "business",
+      "sunset",
+      "dracula",
+      "valentine",
+      "aqua",
+      "retro",
+      "coffee",
+      "forest",
+      "cupcake",
+    ],
+    darkTheme: "blink-dark",
+    base: true,
+    styled: true,
+    utils: true,
+  },
 };

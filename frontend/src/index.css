@@ -1,67 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "./styles/design-tokens.css";
 
 @layer base {
+  html {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
   body {
-    @apply bg-background dark:bg-background-dark text-text dark:text-text-dark antialiased;
-  }
-
-  /* High-contrast mode support */
-  .high-contrast body {
-    @apply bg-background-high-contrast text-text-high-contrast;
+    @apply bg-base-100 text-base-content antialiased;
   }
 }
 
-/* ===== Enhanced Chat Background Pattern ===== */
+/* ===== Chat background: subtle theme-aware dot pattern ===== */
 .chat-bg-pattern {
-  background-color: #f1f5f9;
+  background-color: oklch(var(--b1));
   background-image:
-    radial-gradient(circle at 20% 50%, rgba(0,0,0,0.03) 1px, transparent 1px),
-    radial-gradient(circle at 80% 20%, rgba(0,0,0,0.02) 1px, transparent 1px);
+    radial-gradient(circle at 20% 50%, oklch(var(--bc) / 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, oklch(var(--bc) / 0.04) 1px, transparent 1px);
   background-size: 40px 40px, 60px 60px;
-}
-
-.dark .chat-bg-pattern {
-  background-color: #020617;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(255,255,255,0.03) 1px, transparent 1px),
-    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 40px 40px, 60px 60px;
-}
-
-.high-contrast .chat-bg-pattern {
-  background-color: #000000;
-  background-image: none;
 }
 
 /* ===== Focus Visible Support ===== */
 .focus-visible {
-  @apply outline-none ring-2 ring-primary dark:ring-primary-dark ring-offset-2;
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-base-100;
 }
 
-.high-contrast .focus-visible {
-  @apply ring-primary-high-contrast;
-}
-
-/* ===== Colorblind-friendly Status Indicators ===== */
+/* ===== Online/offline status dots (keep semantic green/gray) ===== */
 .status-online {
   @apply bg-green-500;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #22c55e40;
-}
-
-.high-contrast .status-online {
-  @apply bg-success-high-contrast;
-  box-shadow: none;
+  box-shadow: 0 0 0 2px oklch(var(--b1)), 0 0 0 4px rgb(34 197 94 / 0.25);
 }
 
 .status-offline {
-  @apply bg-slate-400;
-}
-
-.high-contrast .status-offline {
-  @apply bg-gray-500;
+  @apply bg-base-300;
 }
 
 /* ===== Enhanced Touch Targets ===== */
@@ -74,18 +46,23 @@
 
 /* ===== Skip Link for Accessibility ===== */
 .skip-link {
-  @apply absolute -top-full left-2 bg-primary text-white px-4 py-2 rounded-lg z-50 transition-all;
-}
-
-.high-contrast .skip-link {
-  @apply bg-primary-high-contrast text-black;
+  @apply absolute -top-full left-2 btn btn-primary btn-sm z-50 transition-all;
 }
 
 .skip-link:focus {
   @apply top-2;
 }
 
-/* ===== High-Contrast message bubbles support ===== */
+/* ===== High-Contrast mode support (opt-in via body class) ===== */
+.high-contrast {
+  --p: 0% 0 0;
+  --pc: 0% 0 0;
+}
+
+.high-contrast body {
+  @apply bg-black text-white;
+}
+
 .high-contrast .message-bubble-self,
 .high-contrast .message-bubble-other {
   background: #000000 !important;
@@ -109,11 +86,7 @@
   right: 0;
   top: 50%;
   height: 1px;
-  background: rgba(148, 163, 184, 0.2);
-}
-
-.high-contrast .date-separator::before {
-  background: #FFFFFF;
+  background: oklch(var(--bc) / 0.15);
 }
 
 .date-separator span {
@@ -123,21 +96,10 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  background: rgba(229, 222, 216, 0.85);
+  background: oklch(var(--b2) / 0.9);
   backdrop-filter: blur(4px);
   border-radius: 9999px;
-  color: #64748b;
-}
-
-.dark .date-separator span {
-  background: rgba(15, 23, 42, 0.85);
-  color: #94a3b8;
-}
-
-.high-contrast .date-separator span {
-  background: #000000;
-  color: #FFFFFF;
-  border: 1px solid #FFFFFF;
+  color: oklch(var(--bc) / 0.6);
 }
 
 /* ===== Custom modern scrollbar ===== */
@@ -149,17 +111,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: oklch(var(--bc) / 0.25);
   border-radius: 9999px;
 }
-.high-contrast ::-webkit-scrollbar-thumb {
-  background: #FFFFFF;
-}
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.45);
-}
-.high-contrast ::-webkit-scrollbar-thumb:hover {
-  background: #FFFF00;
+  background: oklch(var(--bc) / 0.45);
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
@@ -171,8 +127,8 @@
 
 /* ===== Glass effect ===== */
 .glass {
-  background: rgba(var(--color-surface), 0.6);
+  background: oklch(var(--b1) / 0.6);
   backdrop-filter: blur(12px);
-  border-radius: var(--rounded-xl, 1rem);
-  border: 1px solid rgba(var(--color-border), 0.2);
+  border-radius: 1rem;
+  border: 1px solid oklch(var(--bc) / 0.1);
 }

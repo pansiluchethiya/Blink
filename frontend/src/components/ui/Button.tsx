@@ -1,21 +1,19 @@
 import React from 'react';
-import tokens from '../../styles/tokens';
 
 const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }) => {
-  const base = 'inline-flex items-center justify-center rounded-xl font-medium transition-colors disabled:opacity-50';
   const sizes = {
-    sm: 'px-2 py-1 text-sm',
-    md: 'px-3 py-2 text-sm',
-    lg: 'px-4 py-3 text-base'
+    sm: 'btn-sm',
+    md: '',
+    lg: 'btn-lg'
   };
   const variants = {
-    primary: `${tokens.colors.primary} text-white hover:${tokens.colors.primaryDark}`,
-    ghost: 'bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
-    danger: `${tokens.colors.danger} text-white hover:bg-red-700`
+    primary: 'btn-primary',
+    ghost: 'btn-ghost',
+    danger: 'btn-error'
   };
 
   return (
-    <button className={[base, sizes[size], variants[variant], className].join(' ')} {...props}>
+    <button className={['btn', sizes[size], variants[variant], className].join(' ')} {...props}>
       {children}
     </button>
   );

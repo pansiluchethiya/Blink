@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { useThemeStore } from "../store/useThemeStore";
+import { useThemeStore, BLINK_LIGHT, BLINK_DARK } from "../store/useThemeStore";
 import { useFriendStore } from "../store/useFriendStore";
 import {
   Heart,
@@ -561,7 +561,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <>
               <button
                 onClick={() => {
-                  setTheme("light");
+                  setTheme(BLINK_LIGHT);
                   hideMenu();
                 }}
                 className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
@@ -571,7 +571,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
               </button>
               <button
                 onClick={() => {
-                  setTheme("dark");
+                  setTheme(BLINK_DARK);
                   hideMenu();
                 }}
                 className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
