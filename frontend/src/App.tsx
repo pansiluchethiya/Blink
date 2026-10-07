@@ -80,6 +80,16 @@ const App: React.FC = () => {
     checkAuth();
   }, []);
 
+  // Global 401 handler from axios interceptor: clear session without reload loop
+  useEffect(() => {
+    const onUnauthorized = () => {
+      localStorage.removeItem("token");
+      useAuthStore.setState({ authUser: null });
+    };
+    window.addEventListener("blink:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("blink:unauthorized", onUnauthorized);
+  }, []);
+
   // Load user data once authenticated
   useEffect(() => {
     if (authUser && socket) {

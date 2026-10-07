@@ -9,19 +9,17 @@ import WorkspaceSidebar from "../components/WorkspaceSidebar";
 import WorkspaceChat from "../components/WorkspaceChat";
 import StatusUpdateModal from "../components/StatusUpdateModal";
 import UsersPanel from "../components/UsersPanel";
-import CallsView from "../components/CallsView";
 import StatusView from "../components/StatusView";
-import { 
-  MessageSquare, 
-  Phone, 
-  Disc, 
-  Settings, 
+import {
+  MessageSquare,
+  Disc,
+  Settings,
   Users
 } from "lucide-react";
 
 const HomePage = () => {
   const { selectedUser, selectedWorkspace, selectedChannelId } = useChatStore();
-  const [activeTab, setActiveTab] = useState("chats"); // chats, calls, status, users
+  const [activeTab, setActiveTab] = useState("chats"); // chats, status, users
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
@@ -55,7 +53,6 @@ const HomePage = () => {
                 {activeTab === "chats" && (
                   <ConversationList onBurgerClick={() => setIsMobileDrawerOpen(true)} />
                 )}
-                {activeTab === "calls" && <CallsView />}
                 {activeTab === "status" && (
                   <StatusView onAddStatusClick={() => setShowStatusModal(true)} />
                 )}
@@ -89,17 +86,7 @@ const HomePage = () => {
                 <span className="text-[10px] font-bold">Users</span>
               </button>
 
-              <button 
-                onClick={() => setActiveTab("calls")}
-                className={`flex flex-col items-center gap-1 transition-all ${
-                  activeTab === "calls" ? "text-blue-500 scale-105" : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-355"
-                }`}
-              >
-                <Phone size={19} className={activeTab === "calls" ? "fill-current" : ""} />
-                <span className="text-[10px] font-bold">Calls</span>
-              </button>
-
-              <button 
+              <button
                 onClick={() => setActiveTab("status")}
                 className={`flex flex-col items-center gap-1 transition-all ${
                   activeTab === "status" ? "text-blue-500 scale-105" : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-355"
@@ -157,7 +144,6 @@ const HomePage = () => {
                   {activeTab === "chats" && (
                     <ConversationList onBurgerClick={() => setIsMobileDrawerOpen(true)} />
                   )}
-                  {activeTab === "calls" && <CallsView />}
                   {activeTab === "status" && (
                     <StatusView onAddStatusClick={() => setShowStatusModal(true)} />
                   )}

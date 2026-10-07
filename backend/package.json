@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "seed": "node src/seeds/db.seed.js"
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +28,6 @@
     "express": "^4.21.1",
     "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.8.1",
     "multer": "^2.1.1",
     "node-cron": "^4.2.1",
     "prisma": "^6.19.3",

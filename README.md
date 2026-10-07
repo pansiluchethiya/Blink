@@ -1,123 +1,77 @@
-# Open Source Chat App
+# Blink by IOP
 
-![Logo](file:///C:/Users/Pansilu%20Chethiya/.gemini/antigravity/brain/1521aabf-0b80-4ae7-bf36-0b3846295ca4/logo.png)
+Real-time chat app (React + Express + Socket.io) backed by **Koyeb Postgres v18** via Prisma. Ships as a single monolith: the backend serves the API, Socket.io, and the built frontend from `backend/public`.
 
-## 📖 Overview
-
-A modern, real‑time chat application built with **React**, **Node.js**, and **WebSocket**. It showcases a clean UI, extensible architecture, and production‑ready features such as user authentication, message persistence, and a responsive design.
-
-> **Live Demo**: _[Coming soon – hosted at https://chat.example.com]_
-
----
-
-## ✨ Features
-
-- **Real‑time messaging** with WebSocket (Socket.io)
-- **User authentication** (JWT‑based) and profile management
-- **Rich text & emoji support**
-- **Responsive UI** – looks great on desktop and mobile
-- **Threaded conversations** and **search** capability
-- **Docker‑compose** setup for easy local development
-- **Extensible plugin system** for bots and integrations
-- **Self‑hostable** – open source license allows you to run your own instance
-
----
-
-## 🛠️ Tech Stack
+## Stack
 
 | Layer | Technology |
-|------|------------|
-| Front‑end | React 18, Vite, TailwindCSS, TypeScript |
-| Back‑end | Node.js 20, Express, Socket.io, TypeScript |
-| Database | PostgreSQL (via Prisma ORM) |
-| Authentication | JWT, bcrypt |
-| Containerisation | Docker & Docker‑Compose |
-| Testing | Jest, React Testing Library |
+|-------|-----------|
+| Front-end | React 18, Vite, TailwindCSS, TypeScript |
+| Back-end | Node.js 20, Express, Socket.io, TypeScript |
+| Database | Koyeb Postgres v18 (Singapore) via Prisma ORM |
+| Auth | JWT (httpOnly cookie) + bcrypt |
+| Media | Cloudinary |
+| Deploy | Single Koyeb Eco service (Dockerfile, 512MB) |
 
----
+## Local dev
 
-## 📦 Installation
-
-### Prerequisites
-
-- **Node.js** (>=20) and **npm**
-- **Docker** & **Docker‑Compose** (optional, for containerised dev)
-- **Git**
-
-### Steps
+Prerequisites: Node.js >= 20, a Postgres database (local or Koyeb).
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-org/open-source-chat-app.git
-cd open-source-chat-app
+# env
+cp .env.example backend/.env
+# edit backend/.env -> set DATABASE_URL, JWT_SECRET, Cloudinary keys
 
-# Install dependencies
-npm install
+# backend
+cd backend && npm install
+./node_modules/.bin/prisma migrate dev   # creates tables
+npm run dev                                # http://localhost:5001
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env as needed (DB credentials, JWT secret, etc.)
-
-# Run the development servers
-npm run dev   # starts Vite dev server (frontend) & backend concurrently
+# frontend (separate terminal)
+cd frontend && npm install && npm run dev  # http://localhost:5173
 ```
 
-If you prefer Docker:
+The frontend dev server proxies `/api` and `/socket.io` to `http://localhost:5001` (see `vite.config.ts`), so no CORS setup is needed locally.
 
-```bash
-docker-compose up --build
+## Production (Koyeb)
+
+One Eco service builds the repo `Dockerfile`:
+
+1. Frontend is built with Vite and copied into `backend/public`.
+2. Backend runs `prisma migrate deploy` on boot, then starts Express + Socket.io.
+3. Express serves `/api/*`, Socket.io on the same port, and the SPA fallback for everything else.
+
+Required service env vars (Koyeb dashboard -> Service -> Environment):
+
+| Var | Value |
+|-----|-------|
+| `DATABASE_URL` | Postgres connection string (Koyeb Database -> Connection details), `?sslmode=require` |
+| `FRONTEND_URL` | Public app URL, e.g. `https://blink.koyeb.app` (used for CORS) |
+| `JWT_SECRET` | Long random string (min 32 chars) |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Media uploads |
+| `HELP_CENTER_EMAIL` / `HELP_CENTER_PASSWORD` | Seeded support account |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VITE_VAPID_PUBLIC_KEY` | Web-push (optional) |
+
+Health check: `GET /api/health` (also the Dockerfile `HEALTHCHECK`).
+
+## Project layout
+
+```
+frontend/          # React SPA
+backend/
+  prisma/schema.prisma   # 11 models (User, Message, Friendship, Group, ...)
+  prisma/migrations/     # applied with `prisma migrate deploy` on boot
+  src/
+    controllers/   # auth, message, friendship, notification, workspace, ...
+    lib/prisma.ts  # Prisma singleton + _id response helpers
+    middleware/    # JWT auth (Prisma-backed)
+    routes/
+  public/          # built frontend (Docker build only, gitignored)
+Dockerfile         # single-image monolith build
 ```
 
-The app will be available at `http://localhost:3000`.
+API compatibility note: responses keep the Mongo-style `_id` field (string UUIDs), so existing clients keep working.
 
----
+## License
 
-## 🚀 Usage
-
-1. **Register** a new account or **log in** with existing credentials.
-2. Start a new conversation or join an existing channel.
-3. Type a message and hit **Enter** – it appears instantly for all participants.
-4. Use the emoji picker (top‑right) or markdown shortcuts for formatting.
-5. Access your profile to update avatar, display name, or password.
-
----
-
-## 🏗️ Architecture Overview
-
-```
-frontend/       # React SPA – UI components, routing, state management
-backend/        # Express API – auth, message routes, WebSocket server
-src/            # Shared TypeScript types & utilities
-prisma/         # DB schema + migrations
-Dockerfile       # Container image for the backend
-docker-compose.yml # Orchestrates frontend, backend, and DB services
-```
-
-The frontend communicates with the backend via REST for auth and with the WebSocket endpoint for live chat. Messages are persisted in PostgreSQL and broadcast using Socket.io rooms.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. **Fork** the repository.
-2. Create a **feature branch**: `git checkout -b feature/awesome-feature`.
-3. Make your changes and ensure tests pass: `npm test`.
-4. Open a **Pull Request** with a clear description of your changes.
-5. Follow the code style guidelines (Prettier + ESLint) – the CI will enforce them.
-
-See `CONTRIBUTING.md` for detailed guidelines.
-
----
-
-## 📄 License
-
-Distributed under the **MIT License**. See `LICENSE` for more information.
-
----
-
-## 🙏 Acknowledgements
-
-- Inspired by the classic **Slack** UI and **Discord** chat experience.
-- Thanks to the open‑source community for libraries such as **Socket.io**, **Prisma**, and **TailwindCSS**.
+MIT.
