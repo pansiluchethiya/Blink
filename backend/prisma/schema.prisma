@@ -42,48 +42,48 @@ enum ChannelType {
 }
 
 model User {
-  id                      String    @id @default(uuid()) @db.Uuid
-  email                   String    @unique
+  id                      String     @id @default(uuid()) @db.Uuid
+  email                   String     @unique
   fullName                String
   password                String
-  profilePic              String    @default("")
+  profilePic              String     @default("")
   status                  UserStatus @default(offline)
-  dnd                     Boolean   @default(false)
-  statusMessage           String    @default("")
-  lastSeen                DateTime  @default(now())
-  archivedChats           String[]  @default([]) @db.Uuid
-  pinnedChats             String[]  @default([]) @db.Uuid
-  mutedChats              String[]  @default([]) @db.Uuid
-  blockedUsers            String[]  @default([]) @db.Uuid
-  lockedChats             String[]  @default([]) @db.Uuid
-  lockPins                Json      @default("{}")
-  theme                   String    @default("dark")
-  notificationPreferences Json      @default("{\"directMessages\":true,\"mentions\":true,\"workspaceActivity\":true}")
+  dnd                     Boolean    @default(false)
+  statusMessage           String     @default("")
+  lastSeen                DateTime   @default(now())
+  archivedChats           String[]   @default([]) @db.Uuid
+  pinnedChats             String[]   @default([]) @db.Uuid
+  mutedChats              String[]   @default([]) @db.Uuid
+  blockedUsers            String[]   @default([]) @db.Uuid
+  lockedChats             String[]   @default([]) @db.Uuid
+  lockPins                Json       @default("{}")
+  theme                   String     @default("dark")
+  notificationPreferences Json       @default("{\"directMessages\":true,\"mentions\":true,\"workspaceActivity\":true}")
   pushSubscription        Json?
-  chatSettings            Json      @default("{}")
-  username                String    @unique
-  handle                  String    @unique
-  bio                     String    @default("") @db.VarChar(500)
-  avatar                  String    @default("")
-  isPrivate               Boolean   @default(false)
-  privateAvatar           String    @default("")
-  allowedViewers          String[]  @default([]) @db.Uuid
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  chatSettings            Json       @default("{}")
+  username                String     @unique
+  handle                  String     @unique
+  bio                     String     @default("") @db.VarChar(500)
+  avatar                  String     @default("")
+  isPrivate               Boolean    @default(false)
+  privateAvatar           String     @default("")
+  allowedViewers          String[]   @default([]) @db.Uuid
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
 
-  sentMessages      Message[]           @relation("SentMessages")
-  receivedMessages  Message[]           @relation("ReceivedMessages")
-  sentFriendships   Friendship[]        @relation("Requester")
-  receivedFriendships Friendship[]      @relation("Receiver")
-  notifications     Notification[]      @relation("Recipient")
-  actedNotifications Notification[]     @relation("Actor")
-  ownedWorkspaces   Workspace[]         @relation("WorkspaceOwner")
-  ownedGroups       Group[]             @relation("GroupAdmin")
-  ownedCommunities  Community[]         @relation("CommunityOwner")
-  workspaceMessages WorkspaceMessage[]
-  pollsCreated      WorkspacePoll[]
-  resourcesUploaded WorkspaceResource[]
-  scheduledMessages ScheduledMessage[]
+  sentMessages        Message[]           @relation("SentMessages")
+  receivedMessages    Message[]           @relation("ReceivedMessages")
+  sentFriendships     Friendship[]        @relation("Requester")
+  receivedFriendships Friendship[]        @relation("Receiver")
+  notifications       Notification[]      @relation("Recipient")
+  actedNotifications  Notification[]      @relation("Actor")
+  ownedWorkspaces     Workspace[]         @relation("WorkspaceOwner")
+  ownedGroups         Group[]             @relation("GroupAdmin")
+  ownedCommunities    Community[]         @relation("CommunityOwner")
+  workspaceMessages   WorkspaceMessage[]
+  pollsCreated        WorkspacePoll[]
+  resourcesUploaded   WorkspaceResource[]
+  scheduledMessages   ScheduledMessage[]
 
   @@index([email])
   @@index([username])
@@ -92,41 +92,41 @@ model User {
 }
 
 model Message {
-  id              String    @id @default(uuid()) @db.Uuid
-  senderId        String    @db.Uuid
-  receiverId      String?   @db.Uuid
-  text            String?   @db.VarChar(1024)
-  image           String?
-  file            Json?
-  deliveredAt     DateTime?
-  isRead          Boolean   @default(false)
-  readAt          DateTime?
-  reactions       Json      @default("{}")
-  isEdited        Boolean   @default(false)
-  editedAt        DateTime?
-  editHistory     Json      @default("[]")
-  isDeleted       Boolean   @default(false)
-  deletedAt       DateTime?
-  isPinned        Boolean   @default(false)
-  pinnedAt        DateTime?
-  pinnedBy        String?   @db.Uuid
-  threadId        String?   @db.Uuid
-  threadReplyCount Int      @default(0)
-  replyToId       String?   @db.Uuid
-  forwardedFromId String?   @db.Uuid
-  viewOnce        Boolean   @default(false)
-  viewedOnce      Boolean   @default(false)
-  viewedAt        DateTime?
-  expiresAt       DateTime?
-  isExpired       Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id               String    @id @default(uuid()) @db.Uuid
+  senderId         String    @db.Uuid
+  receiverId       String?   @db.Uuid
+  text             String?   @db.VarChar(1024)
+  image            String?
+  file             Json?
+  deliveredAt      DateTime?
+  isRead           Boolean   @default(false)
+  readAt           DateTime?
+  reactions        Json      @default("{}")
+  isEdited         Boolean   @default(false)
+  editedAt         DateTime?
+  editHistory      Json      @default("[]")
+  isDeleted        Boolean   @default(false)
+  deletedAt        DateTime?
+  isPinned         Boolean   @default(false)
+  pinnedAt         DateTime?
+  pinnedBy         String?   @db.Uuid
+  threadId         String?   @db.Uuid
+  threadReplyCount Int       @default(0)
+  replyToId        String?   @db.Uuid
+  forwardedFromId  String?   @db.Uuid
+  viewOnce         Boolean   @default(false)
+  viewedOnce       Boolean   @default(false)
+  viewedAt         DateTime?
+  expiresAt        DateTime?
+  isExpired        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  sender        User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver      User?    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  replyTo       Message? @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  sender        User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver      User?     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  replyTo       Message?  @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
   replies       Message[] @relation("MessageReply")
-  thread        Message? @relation("MessageThread", fields: [threadId], references: [id], onDelete: SetNull)
+  thread        Message?  @relation("MessageThread", fields: [threadId], references: [id], onDelete: SetNull)
   threadReplies Message[] @relation("MessageThread")
 
   @@index([senderId, createdAt(sort: Desc)])
@@ -199,10 +199,10 @@ model Workspace {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  owner    User      @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  channels Channel[]
-  messages WorkspaceMessage[]
-  polls    WorkspacePoll[]
+  owner     User                @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  channels  Channel[]
+  messages  WorkspaceMessage[]
+  polls     WorkspacePoll[]
   resources WorkspaceResource[]
   scheduled ScheduledMessage[]
 
@@ -220,7 +220,7 @@ model Channel {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   messages  WorkspaceMessage[]
   polls     WorkspacePoll[]
   resources WorkspaceResource[]
@@ -250,10 +250,10 @@ model WorkspaceMessage {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  sender    User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  channel   Channel           @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  replyTo   WorkspaceMessage? @relation("WorkspaceReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  sender    User               @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channel   Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  replyTo   WorkspaceMessage?  @relation("WorkspaceReply", fields: [replyToId], references: [id], onDelete: SetNull)
   replies   WorkspaceMessage[] @relation("WorkspaceReply")
 
   @@index([workspaceId, channelId, createdAt])
@@ -281,8 +281,8 @@ model WorkspacePoll {
 }
 
 model PollOption {
-  id     String @id @default(uuid()) @db.Uuid
-  pollId String @db.Uuid
+  id     String     @id @default(uuid()) @db.Uuid
+  pollId String     @db.Uuid
   text   String
   votes  PollVote[]
 
@@ -316,24 +316,25 @@ model WorkspaceResource {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  uploader  User    @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channel   Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  uploader  User      @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, channelId])
   @@map("workspace_resources")
 }
 
 model Notification {
-  id        String           @id @default(uuid()) @db.Uuid
-  recipientId String         @db.Uuid
-  actorId   String           @db.Uuid
-  type      NotificationType
-  title     String
-  body      String
-  metadata  Json?
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id          String           @id @default(uuid()) @db.Uuid
+  recipientId String           @db.Uuid
+  actorId     String           @db.Uuid
+  type        NotificationType
+  title       String
+  body        String
+  metadata    Json?
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   recipient User @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
   actor     User @relation("Actor", fields: [actorId], references: [id], onDelete: Cascade)

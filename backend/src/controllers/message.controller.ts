@@ -725,7 +725,7 @@ export const searchMessages = async (req: AuthRequest, res: Response): Promise<a
     let filtered = results;
     if (fileType) {
       const ft = String(fileType).toLowerCase();
-      filtered = results.filter((m) => {
+      filtered = results.filter((m: any) => {
         const f = m.file as any;
         const t = f && typeof f === "object" ? String(f.type ?? "") : "";
         return t.toLowerCase().includes(ft);
@@ -1012,7 +1012,7 @@ export const getCommunityData = async (req: AuthRequest, res: Response): Promise
       where: { members: { has: myId } },
       select: { id: true },
     });
-    const wsIds = memberWorkspaces.map((w) => w.id);
+    const wsIds = memberWorkspaces.map((w: any) => w.id);
     const channels = wsIds.length > 0
       ? await prisma.channel.findMany({
           where: { workspaceId: { in: wsIds } },
@@ -1020,8 +1020,8 @@ export const getCommunityData = async (req: AuthRequest, res: Response): Promise
         })
       : [];
     res.status(200).json({
-      communityIds: communities.map((c) => c.id),
-      subscribedChannels: channels.map((c) => c.id),
+      communityIds: communities.map((c: any) => c.id),
+      subscribedChannels: channels.map((c: any) => c.id),
     });
   } catch (error: any) {
     console.log("Error in getCommunityData: ", error.message);
@@ -1215,14 +1215,14 @@ export const exportChat = async (req: AuthRequest, res: Response): Promise<any> 
     });
     if (!chatUser) return res.status(404).json({ error: "Chat partner not found" });
 
-    const fwdIds = [...new Set(messages.map((m) => m.forwardedFromId).filter((v): v is string => !!v))];
+    const fwdIds = [...new Set(messages.map((m: any) => m.forwardedFromId).filter((v: any): v is string => !!v))];
     const fwdRows = fwdIds.length > 0
       ? await prisma.message.findMany({
           where: { id: { in: fwdIds } },
           select: { id: true, text: true, senderId: true },
         })
       : [];
-    const fwdMap = new Map(fwdRows.map((m) => [m.id, m]));
+    const fwdMap = new Map(fwdRows.map((m: any) => [m.id, m]));
 
     const chatWith = toResponse(chatUser as any) as any;
     const exportData: any = {

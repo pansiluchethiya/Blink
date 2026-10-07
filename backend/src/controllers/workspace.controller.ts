@@ -55,11 +55,12 @@ async function populateWorkspace(ws: any) {
           select: senderMiniSelect,
         })
       : [];
-  const byId = new Map(memberUsers.map((u) => [u.id, u]));
-  const membersOrdered = memberIds
-    .map((id) => byId.get(id))
-    .filter((u): u is (typeof memberUsers)[number] => Boolean(u))
-    .map((u) => toResponse(u as any));
+  const byId = new Map<string, any>(memberUsers.map((u: any) => [u.id, u] as [string, any]));
+  const membersOrdered: any[] = [];
+  for (const id of memberIds) {
+    const hit = byId.get(id);
+    if (hit) membersOrdered.push(toResponse(hit as any));
+  }
 
   const base: any = toResponse(ws as any);
   return {
@@ -170,12 +171,12 @@ export const getWorkspaces = catchAsync(async (req: AuthRequest, res: Response) 
         include: { channels: true },
       });
 
-      const announcementsChannel = created.channels.find((c) => c.name.includes("announcements"));
+      const announcementsChannel = created.channels.find((c: any) => c.name.includes("announcements"));
       const generalChannel = created.channels.find(
-        (c) => c.name === "general" || c.name === "design-critique" || c.name === "ai-general"
+        (c: any) => c.name === "general" || c.name === "design-critique" || c.name === "ai-general"
       );
-      const pollsChannel = created.channels.find((c) => (c.type as string) === "polls");
-      const resourcesChannel = created.channels.find((c) => (c.type as string) === "resources");
+      const pollsChannel = created.channels.find((c: any) => (c.type as string) === "polls");
+      const resourcesChannel = created.channels.find((c: any) => (c.type as string) === "resources");
 
       if (announcementsChannel) {
         await prisma.workspaceMessage.create({
@@ -286,7 +287,7 @@ export const createWorkspace = catchAsync(
       include: { channels: true },
     });
 
-    const annChan = created.channels.find((c) => c.name === "announcements");
+    const annChan = created.channels.find((c: any) => c.name === "announcements");
     if (annChan) {
       await prisma.workspaceMessage.create({
         data: {
@@ -383,7 +384,7 @@ export const demoteFromAdmin = catchAsync(
 
     const updated = await prisma.workspace.update({
       where: { id: String(workspaceId) },
-      data: { admins: (workspace.admins ?? []).filter((id) => id !== String(userId)) },
+      data: { admins: (workspace.admins ?? []).filter((id: string) => id !== String(userId)) },
       include: { channels: { orderBy: { createdAt: "asc" } } },
     });
     const populated = await populateWorkspace(updated);
@@ -787,7 +788,7 @@ export const voteInPoll = catchAsync(
     });
     if (!poll) return next(new AppError("Poll not found", 404));
 
-    const optionIds = poll.options.map((o) => o.id);
+    const optionIds = poll.options.map((o: any) => o.id);
     if (!optionIds.includes(String(optionId))) {
       return next(new AppError("Option not found", 404));
     }
@@ -801,7 +802,7 @@ export const voteInPoll = catchAsync(
     const existingVotes = await prisma.pollVote.findMany({
       where: { userId, optionId: { in: optionIds } },
     });
-    const votedTarget = existingVotes.find((v) => v.optionId === String(optionId));
+    const votedTarget = existingVotes.find((v: any) => v.optionId === String(optionId));
 
     if (votedTarget) {
       // Toggle off
