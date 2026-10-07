@@ -14,6 +14,7 @@ dev-dist
 dist-ssr
 *.local
 screenshots
+!docs/screenshots/
 
 # Editor directories and files
 .vscode/*

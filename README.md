@@ -2,6 +2,14 @@
 
 Real-time chat app (React + Express + Socket.io) backed by **Koyeb Postgres v18** via Prisma. Ships as a single monolith: the backend serves the API, Socket.io, and the built frontend from `backend/public`.
 
+> **Live:** [blink.koyeb.app](https://blink.koyeb.app) · **Repo:** [github.com/pansiluchethiya/blink](https://github.com/pansiluchethiya/blink)
+
+## Screenshots
+
+| Login | Sign up | Chat |
+|-------|---------|------|
+| ![Login](docs/screenshots/login.png) | ![Sign up](docs/screenshots/signup.png) | ![Chat](docs/screenshots/chat.png) |
+
 ## Stack
 
 | Layer | Technology |
@@ -18,6 +26,10 @@ Real-time chat app (React + Express + Socket.io) backed by **Koyeb Postgres v18*
 Prerequisites: Node.js >= 20, a Postgres database (local or Koyeb).
 
 ```bash
+# clone
+git clone https://github.com/pansiluchethiya/blink.git
+cd blink
+
 # env
 cp .env.example backend/.env
 # edit backend/.env -> set DATABASE_URL, JWT_SECRET, Cloudinary keys
