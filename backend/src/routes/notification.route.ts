@@ -37,7 +37,7 @@ router.post("/push/subscribe", protectRoute, async (req: AuthRequest, res: Respo
   try {
     const subscription = req.body;
     if (req.user) {
-      await User.findByIdAndUpdate(req.user._id, { pushSubscription: subscription });
+      await prisma.user.update({ where: { id: uid(req) }, data: { pushSubscription: subscription as any } });
     }
     res.status(201).json({ message: "Subscribed" });
   } catch (error) {
@@ -48,13 +48,13 @@ router.post("/push/subscribe", protectRoute, async (req: AuthRequest, res: Respo
 
 export const sendPushNotification = async (userId: string, payload: any) => {
   try {
-    const user = await User.findById(userId);
-    const subscription = user?.pushSubscription;
+    const user = await prisma.user.findUnique({ where: { id: String(userId) } });
+    const subscription = (user as any)?.pushSubscription;
     if (subscription) {
       webpush.sendNotification(subscription, JSON.stringify(payload)).catch(async (err: any) => {
         console.error("Error sending web push:", err?.message || err);
         if (err?.statusCode === 410 || err?.statusCode === 404) {
-          await User.findByIdAndUpdate(userId, { pushSubscription: null });
+          await prisma.user.update({ where: { id: String(userId) }, data: { pushSubscription: undefined } }).catch(() => {});
         }
       });
     }
