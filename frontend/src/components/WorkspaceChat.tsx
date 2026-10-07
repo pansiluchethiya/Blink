@@ -23,9 +23,11 @@ import {
   FileText,
   HelpCircle,
   TrendingUp,
-  Loader
+  Loader,
+  Palette
 } from "lucide-react";
 import toast from "react-hot-toast";
+import ChatThemePicker from "./ChatThemePicker";
 
 // Date formatting helper
 const formatDateLabel = (dateStr) => {
@@ -62,6 +64,9 @@ const WorkspaceChat = ({ onBurgerClick }) => {
     uploadResource,
     channelTypingUsers
   } = useChatStore();
+  const getChatTheme = useChatStore((s) => s.getChatTheme);
+  const setChatTheme = useChatStore((s) => s.setChatTheme);
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   const { authUser, socket } = useAuthStore();
 
@@ -1000,7 +1005,10 @@ const WorkspaceChat = ({ onBurgerClick }) => {
   };
 
   return (
-    <div className="flex-1 flex h-full overflow-hidden bg-slate-950 select-text">
+    <div
+      data-theme={selectedChannelId ? getChatTheme(`channel:${selectedChannelId}`) ?? undefined : undefined}
+      className="flex-1 flex h-full overflow-hidden bg-base-100 select-text"
+    >
       {/* Main Channel Layout */}
       <div className="flex-grow flex flex-col h-full overflow-hidden">
         {/* Header */}
@@ -1040,6 +1048,14 @@ const WorkspaceChat = ({ onBurgerClick }) => {
           </div>
 
           <div className="flex items-center gap-1">
+            {/* Channel Theme Button */}
+            <button
+              onClick={() => setShowThemePicker(true)}
+              className="size-9 rounded-xl flex items-center justify-center transition text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent"
+              title="Channel theme"
+            >
+              <Palette className="w-4 h-4" />
+            </button>
             {/* AI Assistant Toggle Button */}
             <button
               onClick={() => setShowAiDrawer(!showAiDrawer)}
@@ -1126,6 +1142,36 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             </button>
           </form>
         </aside>
+      )}
+
+      {/* Channel Theme Picker */}
+      {showThemePicker && selectedChannelId && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center"
+          onClick={() => setShowThemePicker(false)}
+        >
+          <div
+            className="w-full sm:w-[420px] bg-base-100 rounded-t-3xl sm:rounded-3xl shadow-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-base font-bold text-base-content">Channel theme</h3>
+              <button
+                onClick={() => setShowThemePicker(false)}
+                className="p-2 rounded-xl hover:bg-base-200 transition-colors"
+                aria-label="Close"
+              >
+                <X size={18} className="text-base-content/50" />
+              </button>
+            </div>
+            <ChatThemePicker
+              peerName={`#${channel?.name ?? "channel"}`}
+              peerSeed={`channel:${selectedChannelId}`}
+              current={getChatTheme(`channel:${selectedChannelId}`)}
+              onSelect={(name) => setChatTheme(`channel:${selectedChannelId}`, name)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

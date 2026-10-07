@@ -105,147 +105,15 @@ const VALID_CHANNEL_TYPES = ["chat", "polls", "resources", "voice"] as const;
 
 export const getWorkspaces = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = meId(req);
-  let rows = await prisma.workspace.findMany({
+  // No auto-seeding: new users start with an empty workspace list and a
+  // "create your first workspace" CTA in the client.
+  const rows = await prisma.workspace.findMany({
     where: { members: { has: userId } },
     include: { channels: { orderBy: { createdAt: "asc" } } },
     orderBy: { createdAt: "asc" },
   });
 
-  if (rows.length === 0) {
-    console.log("Seeding default workspaces for user: ", userId);
 
-    const seedWorkspaces: Array<{
-      name: string;
-      icon: string;
-      description: string;
-      channels: Array<{ name: string; type: string; topic: string }>;
-    }> = [
-      {
-        name: "Design Squad",
-        icon: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
-        description: "Collaboration space for UX/UI designers and React frontend developers.",
-        channels: [
-          { name: "announcements", type: "chat", topic: "Company-wide styling announcements and React design tokens." },
-          { name: "design-critique", type: "chat", topic: "Post and critique UI component mockups." },
-          { name: "active-polls", type: "polls", topic: "Vote on layout updates and color harmonies." },
-          { name: "resources", type: "resources", topic: "Shared asset links, icons, and typography guides." },
-        ],
-      },
-      {
-        name: "AI Lab",
-        icon: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)",
-        description: "R&D server for advanced agent capabilities, socket bridges, and LLMs.",
-        channels: [
-          { name: "announcements", type: "chat", topic: "Important announcements about agentic code pipelines." },
-          { name: "ai-general", type: "chat", topic: "General discussions about agent logic, vector databases, and UI." },
-        ],
-      },
-      {
-        name: "Operations",
-        icon: "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
-        description: "Operational checklists, deployment schedules, and performance monitoring.",
-        channels: [
-          { name: "ops-announcements", type: "chat", topic: "System status alerts and scaling notifications." },
-          { name: "general", type: "chat", topic: "General ops coordination and container scaling conversations." },
-        ],
-      },
-    ];
-
-    for (const w of seedWorkspaces) {
-      const created = await prisma.workspace.create({
-        data: {
-          name: w.name,
-          icon: w.icon,
-          description: w.description,
-          ownerId: userId,
-          admins: [userId],
-          members: [userId],
-          channels: {
-            create: w.channels.map((c) => ({
-              name: c.name,
-              type: c.type as any,
-              topic: c.topic,
-            })),
-          },
-        },
-        include: { channels: true },
-      });
-
-      const announcementsChannel = created.channels.find((c: any) => c.name.includes("announcements"));
-      const generalChannel = created.channels.find(
-        (c: any) => c.name === "general" || c.name === "design-critique" || c.name === "ai-general"
-      );
-      const pollsChannel = created.channels.find((c: any) => (c.type as string) === "polls");
-      const resourcesChannel = created.channels.find((c: any) => (c.type as string) === "resources");
-
-      if (announcementsChannel) {
-        await prisma.workspaceMessage.create({
-          data: {
-            senderId: userId,
-            workspaceId: created.id,
-            channelId: announcementsChannel.id,
-            text: `🚀 Welcome to the brand new **${created.name}** workspace! Dive into channels, trigger interactive polls, and share assets directly with your team.`,
-          },
-        });
-      }
-
-      if (generalChannel) {
-        await prisma.workspaceMessage.create({
-          data: {
-            senderId: userId,
-            workspaceId: created.id,
-            channelId: generalChannel.id,
-            text: "Hello everyone! This channel is fully operational. Try sending a message or attaching a file to test the real MERN synchronization.",
-          },
-        });
-      }
-
-      if (pollsChannel) {
-        const poll = await prisma.workspacePoll.create({
-          data: {
-            workspaceId: created.id,
-            channelId: pollsChannel.id,
-            question: "Which primary palette should we adopt for the new dark mode theme?",
-            creatorId: userId,
-            options: {
-              create: [
-                { text: "Neon Glassmorphism (Vibrant Purples & Pinks)" },
-                { text: "Midnight Cyberpunk (Deep Blues & Cyans)" },
-                { text: "Nordic Minimalist (Sleek Monochromes)" },
-              ],
-            },
-          },
-          include: { options: true },
-        });
-        const firstOption = poll.options[0];
-        if (firstOption) {
-          await prisma.pollVote.create({
-            data: { optionId: firstOption.id, userId },
-          });
-        }
-      }
-
-      if (resourcesChannel) {
-        await prisma.workspaceResource.create({
-          data: {
-            workspaceId: created.id,
-            channelId: resourcesChannel.id,
-            name: "React Design System Spec.pdf",
-            url: "https://res.cloudinary.com/demo/image/upload/v1371281596/sample.jpg",
-            type: "application/pdf",
-            size: 2048576,
-            uploadedBy: userId,
-          },
-        });
-      }
-    }
-
-    rows = await prisma.workspace.findMany({
-      where: { members: { has: userId } },
-      include: { channels: { orderBy: { createdAt: "asc" } } },
-      orderBy: { createdAt: "asc" },
-    });
-  }
 
   const out = [];
   for (const ws of rows) out.push(await populateWorkspace(ws));
