@@ -1,7 +1,8 @@
-import { Types } from "mongoose";
+export type ObjectId = string;
 
 export interface IUser {
-  _id: string | Types.ObjectId;
+  _id: string;
+  id?: string;
   fullName: string;
   email: string;
   password?: string;
@@ -12,11 +13,11 @@ export interface IUser {
   dnd?: boolean;
   statusMessage?: string;
   lastSeen?: Date;
-  blockedUsers?: (string | Types.ObjectId)[];
-  pinnedChats?: (string | Types.ObjectId)[];
-  archivedChats?: (string | Types.ObjectId)[];
-  mutedChats?: (string | Types.ObjectId)[];
-  lockedChats?: (string | Types.ObjectId)[];
+  blockedUsers?: (string | string)[];
+  pinnedChats?: (string | string)[];
+  archivedChats?: (string | string)[];
+  mutedChats?: (string | string)[];
+  lockedChats?: (string | string)[];
   lockPins?: Map<string, string>;
   theme?: string;
   notificationPreferences?: {
@@ -35,15 +36,15 @@ export interface IUser {
     isPrivate?: boolean;
     avatar?: string;
   };
-  allowedViewers?: Types.ObjectId[];
+  allowedViewers?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IMessage {
-  _id: string | Types.ObjectId;
-  senderId: string | Types.ObjectId | IUser;
-  receiverId: string | Types.ObjectId | IUser;
+  _id: string | string;
+  senderId: string | string | IUser;
+  receiverId: string | string | IUser;
   text?: string | null;
   image?: string | null;
   file?: {
@@ -55,8 +56,8 @@ export interface IMessage {
   isRead: boolean;
   deliveredAt?: Date;
   readAt?: Date;
-  replyTo?: string | Types.ObjectId | IMessage | null;
-  forwardedFrom?: string | Types.ObjectId | IMessage | null;
+  replyTo?: string | string | IMessage | null;
+  forwardedFrom?: string | string | IMessage | null;
   isEdited: boolean;
   editedAt?: Date;
   editHistory?: { text: string; editedAt: Date }[];
@@ -64,32 +65,32 @@ export interface IMessage {
   deletedAt?: Date;
   isPinned: boolean;
   pinnedAt?: Date;
-  pinnedBy?: string | Types.ObjectId;
-  threadId?: string | Types.ObjectId | null;
+  pinnedBy?: string | string;
+  threadId?: string | string | null;
   threadReplyCount?: number;
   isExpired?: boolean;
   expiresAt?: Date;
   viewOnce: boolean;
   viewedOnce: boolean;
   viewedAt?: Date;
-  reactions?: Map<string, (string | Types.ObjectId)[]> | null;
+  reactions?: Map<string, (string | string)[]> | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IWorkspace {
-  _id: string | Types.ObjectId;
+  _id: string | string;
   name: string;
   handle?: string;
   icon?: string;
   description?: string;
-  owner: string | Types.ObjectId;
-  admins: (string | Types.ObjectId)[];
-  members: (string | Types.ObjectId | IUser)[];
+  owner: string | string;
+  admins: (string | string)[];
+  members: (string | string | IUser)[];
   channels: IChannel[];
   maxMembers: number;
   pendingApproval: boolean;
-  joinRequests: (string | Types.ObjectId)[];
+  joinRequests: (string | string)[];
   permissions: {
     canEditInfo: 'admins' | 'everyone';
     canSendMessages: 'admins' | 'everyone';
@@ -99,13 +100,13 @@ export interface IWorkspace {
     enabled: boolean;
     duration: number;
   };
-  communityId?: string | Types.ObjectId | null;
+  communityId?: string | string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IChannel {
-  _id: string | Types.ObjectId;
+  _id: string | string;
   name: string;
   type: 'chat' | 'polls' | 'resources';
   topic?: string;
@@ -113,25 +114,25 @@ export interface IChannel {
 }
 
 export interface IFriendship {
-  _id: string | Types.ObjectId;
-  requesterId: string | Types.ObjectId | IUser;
-  receiverId: string | Types.ObjectId | IUser;
+  _id: string | string;
+  requesterId: string | string | IUser;
+  receiverId: string | string | IUser;
   status: 'pending' | 'accepted' | 'blocked';
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface INotification {
-  _id: string | Types.ObjectId;
-  recipient: string | Types.ObjectId | IUser;
-  actor: string | Types.ObjectId | IUser;
+  _id: string | string;
+  recipient: string | string | IUser;
+  actor: string | string | IUser;
   type: 'direct_message' | 'group_message' | 'mention' | 'reply' | 'friend_request' | 'friend_accept' | 'follow' | 'reaction' | 'welcome' | 'announcement' | 'security';
   title: string;
   body: string;
   metadata?: {
-    messageId?: string | Types.ObjectId;
-    conversationId?: string | Types.ObjectId;
-    groupId?: string | Types.ObjectId;
+    messageId?: string | string;
+    conversationId?: string | string;
+    groupId?: string | string;
     reactionType?: string;
     link?: string;
   };
@@ -141,19 +142,19 @@ export interface INotification {
 }
 
 export interface IGroup {
-  _id: string | Types.ObjectId;
+  _id: string | string;
   name: string;
-  members: (string | Types.ObjectId | IUser)[];
-  admin: string | Types.ObjectId | IUser;
+  members: (string | string | IUser)[];
+  admin: string | string | IUser;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IWorkspaceMessage {
-  _id: string | Types.ObjectId;
-  senderId: string | Types.ObjectId | IUser;
-  workspaceId: string | Types.ObjectId | IWorkspace;
-  channelId: string | Types.ObjectId;
+  _id: string | string;
+  senderId: string | string | IUser;
+  workspaceId: string | string | IWorkspace;
+  channelId: string | string;
   text?: string;
   image?: string;
   file?: {
@@ -162,46 +163,46 @@ export interface IWorkspaceMessage {
     type: string;
     size: number;
   };
-  reactions?: Map<string, (string | Types.ObjectId)[]>;
+  reactions?: Map<string, (string | string)[]>;
   isEdited: boolean;
   editedAt?: Date;
-  replyTo?: string | Types.ObjectId | IWorkspaceMessage;
-  threadId?: string | Types.ObjectId | null;
+  replyTo?: string | string | IWorkspaceMessage;
+  threadId?: string | string | null;
   threadReplyCount?: number;
   // Pinning fields
   isPinned?: boolean;
   pinnedAt?: Date;
-  pinnedBy?: string | Types.ObjectId;
+  pinnedBy?: string | string;
   expiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IWorkspacePoll {
-  _id: string | Types.ObjectId;
-  workspaceId: string | Types.ObjectId | IWorkspace;
-  channelId: string | Types.ObjectId;
+  _id: string | string;
+  workspaceId: string | string | IWorkspace;
+  channelId: string | string;
   question: string;
   options: {
     text: string;
-    votes: (string | Types.ObjectId)[];
-    _id?: string | Types.ObjectId;
+    votes: (string | string)[];
+    _id?: string | string;
   }[];
-  creatorId: string | Types.ObjectId | IUser;
+  creatorId: string | string | IUser;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IWorkspaceResource {
-  _id: string | Types.ObjectId;
-  workspaceId: string | Types.ObjectId | IWorkspace;
-  channelId: string | Types.ObjectId;
+  _id: string | string;
+  workspaceId: string | string | IWorkspace;
+  channelId: string | string;
   name: string;
   url: string;
   type: string;
   size: number;
-  uploadedBy: string | Types.ObjectId | IUser;
+  uploadedBy: string | string | IUser;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,13 +1,11 @@
-import Notification from "../models/notification.model.js";
-import User from "../models/user.model.js";
+import { prisma, toResponse } from "../lib/prisma.js";
 import { io, getReceiverSocketId } from "../lib/socket.js";
 import { sendPushNotification } from "../routes/notification.route.js";
-import { Types } from "mongoose";
 
 interface NotificationData {
-  recipient: Types.ObjectId | string;
-  actor: Types.ObjectId | string;
-  type: string;
+  recipient: string;
+  actor: string;
+  type: "direct_message" | "group_message" | "mention" | "reply" | "friend_request" | "friend_accept" | "follow" | "reaction" | "welcome" | "announcement" | "security";
   title: string;
   body: string;
   metadata?: any;
@@ -16,64 +14,54 @@ interface NotificationData {
 class NotificationService {
   async createNotification({ recipient, actor, type, title, body, metadata }: NotificationData) {
     try {
-      // Check recipient preferences
-      const user = await User.findById(recipient);
+      const user = await prisma.user.findUnique({ where: { id: String(recipient) } });
       if (!user) return null;
 
-      const prefs = user.notificationPreferences as any || {};
-      
+      const prefs = (user.notificationPreferences as any) || {};
       let shouldNotify = true;
-      if (type === "direct_message" && prefs.directMessage === false) shouldNotify = false;
-      if (type === "group_message" && prefs.groupMessage === false) shouldNotify = false;
-      if (type === "mention" && prefs.mention === false) shouldNotify = false;
-      if (type === "friend_request" && prefs.friendRequest === false) shouldNotify = false;
-      if (type === "system" && prefs.system === false) shouldNotify = false;
+      if (type === "direct_message" && prefs.directMessages === false) shouldNotify = false;
+      if (type === "mention" && prefs.mentions === false) shouldNotify = false;
+      if (type === "group_message" && prefs.workspaceActivity === false) shouldNotify = false;
 
       if (!shouldNotify) return null;
 
-      const notification = new Notification({
-        recipient,
-        actor,
-        type,
-        title,
-        body,
-        metadata,
+      const notification = await prisma.notification.create({
+        data: {
+          recipientId: String(recipient),
+          actorId: String(actor),
+          type: type as any,
+          title,
+          body,
+          metadata: metadata ?? undefined,
+        },
+        include: { actor: { select: { id: true, fullName: true, profilePic: true } } },
       });
 
-      await notification.save();
-
-      // Populate actor for the frontend
-      const populatedNotification = await Notification.findById(notification._id)
-        .populate("actor", "fullName profilePic");
-
-      // Emit realtime update
-      const receiverSocketId = getReceiverSocketId(recipient.toString());
+      const out = toResponse(notification as any);
+      const receiverSocketId = getReceiverSocketId(String(recipient));
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("notification:new", populatedNotification);
-        
-        // Also emit count update
-        const unreadCount = await Notification.countDocuments({ recipient, isRead: false });
+        io.to(receiverSocketId).emit("notification:new", out);
+        const unreadCount = await prisma.notification.count({ where: { recipientId: String(recipient), isRead: false } });
         io.to(receiverSocketId).emit("notification:count-update", unreadCount);
       }
 
-      // Send Push Notification
-      sendPushNotification(recipient.toString(), {
+      sendPushNotification(String(recipient), {
         title,
         body,
         url: metadata?.conversationId ? `/?chat=${metadata.conversationId}` : "/",
-      });
+      }).catch(() => {});
 
-      return populatedNotification;
+      return out;
     } catch (error: any) {
       console.log("Error in NotificationService.createNotification", error.message);
       return null;
     }
   }
 
-  async sendWelcomeNotification(userId: Types.ObjectId | string) {
+  async sendWelcomeNotification(userId: string) {
     return this.createNotification({
-      recipient: userId,
-      actor: userId, // Self as actor for system notifications
+      recipient: String(userId),
+      actor: String(userId),
       type: "welcome",
       title: "Welcome to Blink!",
       body: "We're glad you're here. Start chatting with your friends!",

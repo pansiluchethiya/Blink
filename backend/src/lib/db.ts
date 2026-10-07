@@ -1,23 +1,21 @@
-import mongoose from "mongoose";
+import { prisma } from "./prisma.js";
 
 export const connectDB = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URL;
-    
-    if (!mongoUri) {
+    if (!process.env.DATABASE_URL) {
       console.error(
-        "ERROR: MONGODB_URL environment variable is not set!\n" +
-        "Please ensure the MONGODB_URL is set in your environment variables or .env file.\n" +
-        "Local: Add MONGODB_URL to the .env file in the project root.\n" +
-        "Production: Set MONGODB_URL in your deployment platform (e.g., Koyeb environment variables)."
+        "ERROR: DATABASE_URL environment variable is not set!\n" +
+        "Please ensure DATABASE_URL is set in your environment variables or .env file.\n" +
+        "Local: Add DATABASE_URL to the .env file in backend/.\n" +
+        "Production (Koyeb): Set DATABASE_URL in your service environment variables (Postgres -> Connection details -> .env)."
       );
       process.exit(1);
     }
 
-    const conn = await mongoose.connect(mongoUri);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    await prisma.$connect();
+    console.log(`Postgres connected via Prisma`);
   } catch (error) {
-    console.log("MongoDB connection error:", error);
+    console.log("Postgres connection error:", error);
     process.exit(1);
   }
 };

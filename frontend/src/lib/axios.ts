@@ -1,9 +1,7 @@
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.MODE === "development" 
-    ? "http://localhost:5001/api" 
-    : (typeof window !== "undefined" && window.location.origin.includes("pages.dev") ? "https://Blink.koyeb.app/api" : "/api"),
+  baseURL: "/api",
   withCredentials: true,
 });
 
@@ -26,19 +24,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
-      // Clear stored token
-      localStorage.removeItem('token');
-      // Optionally show a toast notification
-      try {
-        // Dynamically import toast to avoid circular imports
-        const toast = require('react-hot-toast').default;
-        toast.error('Session expired. Please log in again.');
-      } catch (e) {
-        // ignore if toast import fails
-      }
-      // Redirect to login page if possible, but avoid redirect loop
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-        window.location.href = '/login';
+      localStorage.removeItem("token");
+      if (typeof window !== "undefined" && window.location.pathname !== "/login" && window.location.pathname !== "/signup") {
+        // Use history API to avoid full reload loop; auth store will redirect
+        window.dispatchEvent(new CustomEvent("blink:unauthorized"));
       }
     }
     return Promise.reject(error);

@@ -1,12 +1,17 @@
 import { Response, NextFunction } from "express";
 import { generateToken } from "../lib/utils.js";
-import User from "../models/user.model.js";
+import { prisma, toResponse } from "../lib/prisma.js";
 import NotificationService from "../services/notification.service.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
 import { AuthRequest } from "../middleware/auth.middleware.js";
+
+const getUserId = (req: AuthRequest): string => {
+  const u: any = (req as any).user;
+  return String(u?._id ?? u?.id);
+};
 
 export const signup = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { fullName, email, password } = req.body;
@@ -19,90 +24,68 @@ export const signup = catchAsync(async (req: AuthRequest, res: Response, next: N
     return next(new AppError("Password must be at least 6 characters", 400));
   }
 
-  const user = await User.findOne({ email });
-
-  if (user) return next(new AppError("Email already exists", 400));
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return next(new AppError("Email already exists", 400));
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Generate unique, length-safe default username and handle
   const emailPrefix = email.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "");
   let baseUsername = emailPrefix || fullName.toLowerCase().replace(/[^a-z0-9_]/g, "") || "user";
-  if (baseUsername.length > 20) {
-    baseUsername = baseUsername.slice(0, 20);
-  }
+  if (baseUsername.length > 20) baseUsername = baseUsername.slice(0, 20);
 
   let username = baseUsername;
   let handle = `@${baseUsername}`;
-
-  let usernameExists = await User.findOne({ username });
-  let handleExists = await User.findOne({ handle });
   let counter = 1;
-
-  while (usernameExists || handleExists) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const u = await prisma.user.findUnique({ where: { username } }).catch(() => null);
+    const h = await prisma.user.findUnique({ where: { handle } }).catch(() => null);
+    if (!u && !h) break;
     const suffix = counter.toString();
     username = `${baseUsername.slice(0, 29 - suffix.length)}${suffix}`;
     handle = `@${baseUsername.slice(0, 19 - suffix.length)}${suffix}`;
-    usernameExists = await User.findOne({ username });
-    handleExists = await User.findOne({ handle });
     counter++;
+    if (counter > 100) return next(new AppError("Could not generate unique username", 500));
   }
 
-  const newUser = new User({
-    fullName,
-    email,
-    password: hashedPassword,
-    username,
-    handle,
+  const newUser = await prisma.user.create({
+    data: { fullName, email, password: hashedPassword, username, handle },
   });
 
-  if (newUser) {
-    const token = generateToken(newUser._id, res);
-    await newUser.save();
+  const token = generateToken(newUser.id, res);
+  NotificationService.sendWelcomeNotification(newUser.id).catch(() => {});
 
-    NotificationService.sendWelcomeNotification(newUser._id);
-
-    res.status(201).json({
-      _id: newUser._id,
-      fullName: newUser.fullName,
-      email: newUser.email,
-      profilePic: newUser.profilePic,
-      notificationPreferences: newUser.notificationPreferences,
-      token: token,
-    });
-  } else {
-    return next(new AppError("Invalid user data", 400));
-  }
+  res.status(201).json({
+    _id: newUser.id,
+    fullName: newUser.fullName,
+    email: newUser.email,
+    profilePic: newUser.profilePic,
+    notificationPreferences: newUser.notificationPreferences,
+    token,
+  });
 });
 
 
 export const login = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return next(new AppError("Invalid credentials", 400));
-  }
-  if (!user.password) {
-    return next(new AppError("Invalid credentials", 400));
-  }
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user?.password) return next(new AppError("Invalid credentials", 400));
 
   const isPasswordCorrect = await bcrypt.compare(password || "", user.password);
-  if (!isPasswordCorrect) {
-    return next(new AppError("Invalid credentials", 400));
-  }
+  if (!isPasswordCorrect) return next(new AppError("Invalid credentials", 400));
 
-  const token = generateToken(user._id, res);
+  await prisma.user.update({ where: { id: user.id }, data: { status: "online", lastSeen: new Date() } });
+  const token = generateToken(user.id, res);
 
   res.status(200).json({
-    _id: user._id,
+    _id: user.id,
     fullName: user.fullName,
     email: user.email,
     profilePic: user.profilePic,
     notificationPreferences: user.notificationPreferences,
-    token: token,
+    token,
   });
 });
 
@@ -114,40 +97,38 @@ export const logout = (req: AuthRequest, res: Response) => {
 
 export const getUserByUsername = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { username } = req.params;
-  const requesterId = req.user?._id;
-  const user = await User.findOne({ username })
-    .select('-password -email')
-    .lean();
-  if (!user) {
-    return next(new AppError('User not found', 404));
+  const requesterId = getUserId(req);
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user) return next(new AppError("User not found", 404));
+  const { password: _pw, email: _em, ...safe } = user as any;
+  const out: any = toResponse(safe as any);
+  if (!user.allowedViewers?.includes(requesterId)) {
+    delete out.privateAvatar;
+    delete out.isPrivate;
   }
-  // If privateProfile exists, check visibility
-  if (user.privateProfile && user.allowedViewers && requesterId) {
-    const isAllowed = user.allowedViewers.some((id: any) => id.equals(requesterId));
-    if (!isAllowed) {
-      // hide private data
-      delete user.privateProfile;
-    }
-  }
-  res.status(200).json(user);
+  res.status(200).json(out);
 });
 
 export const updateProfile = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const allowedUpdates = ['username', 'handle', 'publicProfile', 'privateProfile', 'profilePic'];
-  const updates = req.body;
-  const updateData: any = {};
-  
-  // Filter allowed fields
-  for (const key of allowedUpdates) {
-    if (updates[key] !== undefined) {
-      updateData[key] = updates[key];
-    }
+  const allowed = ["username", "handle", "bio", "avatar", "profilePic", "isPrivate", "privateAvatar", "statusMessage", "theme"] as const;
+  const updates = req.body ?? {};
+  const updateData: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (updates[key] !== undefined) updateData[key] = updates[key];
+  }
+  // Back-compat: publicProfile {bio,avatar}, privateProfile {isPrivate,avatar}
+  if (updates.publicProfile) {
+    if (updates.publicProfile.bio !== undefined) updateData.bio = updates.publicProfile.bio;
+    if (updates.publicProfile.avatar !== undefined) updateData.avatar = updates.publicProfile.avatar;
+  }
+  if (updates.privateProfile) {
+    if (updates.privateProfile.isPrivate !== undefined) updateData.isPrivate = updates.privateProfile.isPrivate;
+    if (updates.privateProfile.avatar !== undefined) updateData.privateAvatar = updates.privateProfile.avatar;
   }
 
-  // Handle profilePic upload to Cloudinary
-  if (updateData.profilePic) {
+  if (updateData.profilePic && typeof updateData.profilePic === "string" && (updateData.profilePic as string).startsWith("data:")) {
     try {
-      const uploadResponse = await cloudinary.uploader.upload(updateData.profilePic);
+      const uploadResponse = await cloudinary.uploader.upload(updateData.profilePic as string);
       updateData.profilePic = uploadResponse.secure_url;
     } catch (error) {
       console.error("Cloudinary upload error:", error);
@@ -155,23 +136,22 @@ export const updateProfile = catchAsync(async (req: AuthRequest, res: Response, 
     }
   }
 
-  // Ensure uniqueness for username and handle if provided
+  const me = getUserId(req);
   if (updateData.username) {
-    const existing = await User.findOne({ username: updateData.username, _id: { $ne: req.user!._id } });
-    if (existing) return next(new AppError('Username already taken', 400));
+    const existing = await prisma.user.findUnique({ where: { username: updateData.username as string } });
+    if (existing && existing.id !== me) return next(new AppError("Username already taken", 400));
   }
   if (updateData.handle) {
-    const existing = await User.findOne({ handle: updateData.handle, _id: { $ne: req.user!._id } });
-    if (existing) return next(new AppError('Handle already taken', 400));
+    const existing = await prisma.user.findUnique({ where: { handle: updateData.handle as string } });
+    if (existing && existing.id !== me) return next(new AppError("Handle already taken", 400));
   }
 
-  const updatedUser = await User.findByIdAndUpdate(req.user!._id, updateData, { new: true, runValidators: true })
-    .select('-password');
-  res.status(200).json(updatedUser);
+  const updated = await prisma.user.update({ where: { id: me }, data: updateData });
+  const { password: _pw2, ...safe2 } = updated as any;
+  res.status(200).json(toResponse(safe2 as any));
 });
 
 export const checkAuth = (req: AuthRequest, res: Response) => {
   res.status(200).json(req.user);
 };
-
 

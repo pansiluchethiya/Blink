@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/user.model.js";
+import { prisma, toResponse } from "../lib/prisma.js";
 import AppError from "../utils/AppError.js";
 import catchAsync from "../utils/catchAsync.js";
 
@@ -33,12 +33,13 @@ export const protectRoute = catchAsync(async (req: AuthRequest, res: Response, n
     return next(new AppError("Unauthorized - Invalid Token", 401));
   }
 
-  const user = await User.findById(decoded.userId).select("-password");
+  const userRow = await prisma.user.findUnique({ where: { id: decoded.userId } });
 
-  if (!user) {
+  if (!userRow) {
     return next(new AppError("User not found", 404));
   }
 
-  req.user = user;
+  const { password: _pw, ...safe } = userRow;
+  req.user = toResponse(safe as any) as any;
   next();
 });
