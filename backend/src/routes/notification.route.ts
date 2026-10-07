@@ -10,7 +10,9 @@ import {
   updatePreferences,
 } from "../controllers/notification.controller.js";
 import webpush from "web-push";
-import User from "../models/user.model.js";
+import { prisma } from "../lib/prisma.js";
+
+const uid = (req: AuthRequest): string => String((req as any).user?._id ?? (req as any).user?.id);
 
 const PUBLIC_VAPID_KEY = process.env.VAPID_PUBLIC_KEY;
 const PRIVATE_VAPID_KEY = process.env.VAPID_PRIVATE_KEY;
