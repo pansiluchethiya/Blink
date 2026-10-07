@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { Search, User, Hash, Zap, X, Command } from "lucide-react";
+import Avatar from "./Avatar";
 
 const CommandPalette = () => {
   const { 
@@ -74,24 +75,24 @@ const CommandPalette = () => {
   return (
     <div className="fixed inset-0 z-[10000] flex items-start justify-center pt-[15vh] px-4">
       <div 
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" 
+        className="fixed inset-0 bg-base-200/40 backdrop-blur-sm animate-in fade-in duration-200" 
         onClick={() => setCommandPaletteOpen(false)}
       />
       
-      <div className="w-full max-w-[600px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-top-4 duration-200">
-        <div className="relative flex items-center px-4 py-4 border-b border-slate-100 dark:border-slate-800">
-          <Search className="size-5 text-slate-400 mr-3" />
+      <div className="w-full max-w-[600px] bg-base-100 rounded-2xl shadow-2xl border border-base-300 overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-top-4 duration-200">
+        <div className="relative flex items-center px-4 py-4 border-b border-base-300">
+          <Search className="size-5 text-base-content/60 mr-3" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Search for people, workspaces, or commands..."
-            className="flex-1 bg-transparent border-none outline-none text-[16px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+            className="flex-1 bg-transparent border-none outline-none text-[16px] text-base-content placeholder:text-base-content/60"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
           />
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Esc</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-base-200 border border-base-300">
+            <span className="text-[10px] font-bold text-base-content/60 uppercase tracking-widest">Esc</span>
           </div>
         </div>
 
@@ -100,7 +101,7 @@ const CommandPalette = () => {
             <>
               {filteredUsers.length > 0 && (
                 <div className="px-4 py-2">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">People</span>
+                  <span className="text-[11px] font-bold text-base-content/60 uppercase tracking-widest">People</span>
                 </div>
               )}
               {filteredUsers.map((user, idx) => (
@@ -108,22 +109,22 @@ const CommandPalette = () => {
                   key={user._id}
                   className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors ${
                     items.indexOf(items.find(i => i.data === user)) === selectedIndex 
-                      ? "bg-primary/10 dark:bg-primary/20 text-primary" 
-                      : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                      ? "bg-primary/10 text-primary" 
+                      : "hover:bg-base-200 text-base-content/60"
                   }`}
                   onClick={() => handleSelect({ type: 'user', data: user })}
                   onMouseEnter={() => setSelectedIndex(items.indexOf(items.find(i => i.data === user)))}
                 >
-                  <div className="size-8 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    <img src={user.profilePic || "/avatar.png"} alt="" className="size-full object-cover" />
+                  <div className="size-8 rounded-full overflow-hidden bg-base-200">
+                    <Avatar user={user} className="size-full" />
                   </div>
                   <span className="font-medium">{user.fullName}</span>
                 </button>
               ))}
 
               {filteredWorkspaces.length > 0 && (
-                <div className="px-4 py-2 mt-2 border-t border-slate-50 dark:border-slate-800 pt-4">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Workspaces</span>
+                <div className="px-4 py-2 mt-2 border-t border-base-300 pt-4">
+                  <span className="text-[11px] font-bold text-base-content/60 uppercase tracking-widest">Workspaces</span>
                 </div>
               )}
               {filteredWorkspaces.map((ws, idx) => (
@@ -131,13 +132,13 @@ const CommandPalette = () => {
                   key={ws._id}
                   className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors ${
                     items.indexOf(items.find(i => i.data === ws)) === selectedIndex 
-                      ? "bg-primary/10 dark:bg-primary/20 text-primary" 
-                      : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                      ? "bg-primary/10 text-primary" 
+                      : "hover:bg-base-200 text-base-content/60"
                   }`}
                   onClick={() => handleSelect({ type: 'workspace', data: ws })}
                   onMouseEnter={() => setSelectedIndex(items.indexOf(items.find(i => i.data === ws)))}
                 >
-                  <div className="size-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-primary">
+                  <div className="size-8 rounded-lg bg-base-200 from-primary/20 to-primary/10 flex items-center justify-center text-primary">
                     <Hash size={18} />
                   </div>
                   <span className="font-medium">{ws.name}</span>
@@ -146,33 +147,33 @@ const CommandPalette = () => {
             </>
           ) : (
             <div className="py-12 px-4 text-center">
-              <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
-                <Search className="size-6 text-slate-300" />
+              <div className="size-12 rounded-2xl bg-base-200 flex items-center justify-center mx-auto mb-3">
+                <Search className="size-6 text-base-content" />
               </div>
-              <p className="text-slate-400 text-sm">No results found for "{query}"</p>
+              <p className="text-base-content/60 text-sm">No results found for "{query}"</p>
             </div>
           )}
         </div>
 
-        <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-4 py-3 bg-base-200 border-t border-base-300 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center size-5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-                <span className="text-[10px] text-slate-500">↑</span>
+              <div className="flex items-center justify-center size-5 rounded bg-base-100 border border-base-300 shadow-sm">
+                <span className="text-[10px] text-base-content/60">↑</span>
               </div>
-              <div className="flex items-center justify-center size-5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-                <span className="text-[10px] text-slate-500">↓</span>
+              <div className="flex items-center justify-center size-5 rounded bg-base-100 border border-base-300 shadow-sm">
+                <span className="text-[10px] text-base-content/60">↓</span>
               </div>
-              <span className="text-[11px] text-slate-400">Navigate</span>
+              <span className="text-[11px] text-base-content/60">Navigate</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center px-1.5 h-5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-                <span className="text-[10px] text-slate-500">Enter</span>
+              <div className="flex items-center justify-center px-1.5 h-5 rounded bg-base-100 border border-base-300 shadow-sm">
+                <span className="text-[10px] text-base-content/60">Enter</span>
               </div>
-              <span className="text-[11px] text-slate-400">Select</span>
+              <span className="text-[11px] text-base-content/60">Select</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400">
+          <div className="flex items-center gap-1.5 text-base-content/60">
             <Zap size={14} className="fill-current" />
             <span className="text-[11px] font-bold uppercase tracking-wider">Quick Actions</span>
           </div>

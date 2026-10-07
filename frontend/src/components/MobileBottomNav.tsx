@@ -9,7 +9,7 @@ const MobileBottomNav = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface/90 dark:bg-surface-dark/90 backdrop-blur-lg border-t border-border dark:border-border-dark flex items-center justify-around px-2 z-50">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface/90 backdrop-blur-lg border-t border-border flex items-center justify-around px-2 z-50">
       {tabs.map(({ id, icon: Icon, label }) => {
         const isActive = activeTab === id;
         return (
@@ -17,7 +17,7 @@ const MobileBottomNav = ({ activeTab, setActiveTab }) => {
             key={id}
             onClick={() => setActiveTab(id)}
             className={`flex flex-col items-center gap-1 transition-all duration-200 ${
-              isActive ? 'text-primary scale-110' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              isActive ? 'text-primary scale-110' : 'text-base-content/60 hover:text-base-content/60'
             }`}
           >
             <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-primary/10' : ''}`}>

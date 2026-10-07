@@ -61,7 +61,7 @@ const ChatThemePicker: React.FC<ChatThemePickerProps> = ({ peerName, peerSeed, c
       }`}
     >
       <div className="flex -space-x-1.5">
-        <span className="size-7 rounded-full bg-white border border-base-300" />
+        <span className="size-7 rounded-full bg-base-100 border border-base-300" />
         <span className="size-7 rounded-full bg-black border border-base-300" />
       </div>
       <div className="flex-1">

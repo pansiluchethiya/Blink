@@ -26,15 +26,15 @@ const LockedChatsPanel = ({ onSelectUser }) => {
   };
 
   return (
-    <div className="border-b border-slate-200 dark:border-slate-700 px-4 py-3 transition-colors duration-200">
+    <div className="border-b border-base-300 px-4 py-3 transition-colors duration-200">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+        <div className="flex items-center gap-2 text-sm font-bold text-base-content">
           <Shield className="size-5 text-amber-500" />
           Locked Chats
         </div>
         <button
           onClick={getLockedChats}
-          className="text-xs font-semibold px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg transition-colors"
+          className="text-xs font-semibold px-2 py-1 bg-base-200 hover:bg-base-200 text-base-content/60 rounded-lg transition-colors"
         >
           Refresh
         </button>
@@ -47,18 +47,18 @@ const LockedChatsPanel = ({ onSelectUser }) => {
               key={chat._id}
               type="button"
               onClick={() => handleOpenLockedChat(chat)}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 p-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm"
+              className="w-full rounded-xl border border-base-300 bg-base-100 p-3 text-left transition hover:bg-base-200 text-base-content hover:border-base-300 shadow-sm"
             >
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-800 dark:text-slate-150">{chat.fullName || chat.name}</span>
-                <ShieldCheck className="size-4 text-emerald-500 dark:text-emerald-400" />
+                <span className="font-semibold text-base-content">{chat.fullName || chat.name}</span>
+                <ShieldCheck className="size-4 text-primary" />
               </div>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">PIN protected</p>
+              <p className="text-xs text-base-content/60 mt-0.5">PIN protected</p>
             </button>
           ))}
         </div>
       ) : (
-        <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold py-1">No locked chats yet.</p>
+        <p className="text-xs text-base-content/60 font-semibold py-1">No locked chats yet.</p>
       )}
 
       <ChatLockModal

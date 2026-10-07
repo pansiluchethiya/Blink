@@ -43,8 +43,8 @@ const MessageReactions = ({ message }) => {
               className={`px-2 py-1 rounded-full text-sm flex items-center gap-1 transition-colors
                 ${
                   hasReaction
-                    ? "bg-primary text-primary-content"
-                    : "bg-base-200 hover:bg-base-300"
+                    ? "bg-primary text-primary-content border border-primary"
+                    : "bg-base-200 hover:bg-base-300 border border-base-300 text-base-content"
                 }
               `}
               title={users?.map(id => id.substring(0, 4)).join(", ")}

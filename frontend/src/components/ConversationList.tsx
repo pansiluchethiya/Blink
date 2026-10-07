@@ -5,7 +5,7 @@ import { useFriendStore } from "../store/useFriendStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Link } from "react-router-dom";
 import FrequentContacts from "./FrequentContacts";
-import { Avatar } from "./ui/BlinkComponents";
+import Avatar from "./Avatar";
 import { Button } from "./ui";
 import Input from "./ui/Input";
 import { Search, Edit3, Zap, MoreHorizontal, CheckCircle2, MessageSquare, Plus, Users } from "lucide-react";
@@ -29,7 +29,7 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
   const { onlineUsers, authUser } = useAuthStore();
   const [searchInput, setSearchInput] = useState("");
   const searchRef = useRef(null);
-  
+
   useEffect(() => {
     getUsers();
     fetchFriends();
@@ -67,8 +67,8 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
     ...workspaces.map(w => ({ ...w, type: 'workspace' }))
   ];
 
-  const displayList = searchInput 
-    ? searchResults.map(u => ({ ...u, type: 'user' })) 
+  const displayList = searchInput
+    ? searchResults.map(u => ({ ...u, type: 'user' }))
     : combinedList;
 
   const baseList = displayList
@@ -86,7 +86,7 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
     if (item.type === 'workspace') return false; // Workspaces not pinnable yet in this logic
     return authUser?.pinnedChats?.includes(item._id);
   });
-  
+
   const unpinnedItems = baseList.filter((item) => {
     if (item.type === 'workspace') return true;
     return !authUser?.pinnedChats?.includes(item._id);
@@ -108,32 +108,36 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
           setSelectedUser(null);
           setSelectedWorkspace(workspace);
         }}
-        className={`w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 border-b border-slate-50 dark:border-slate-800/50 relative overflow-hidden group ${
-          isSelected 
-            ? "bg-slate-50 dark:bg-slate-800/50" 
-            : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+        className={`w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 border-b border-base-300 relative overflow-hidden group ${
+          isSelected
+            ? "bg-base-300"
+            : "hover:bg-base-200"
         }`}
       >
         <div className="relative flex-shrink-0">
-          <div 
-            style={{ background: workspace.icon || "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)" }}
-            className="size-12 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-md"
+          <div
+            style={workspace.icon ? { background: workspace.icon } : undefined}
+            className={`size-12 rounded-2xl flex items-center justify-center font-bold text-sm ${
+              workspace.icon
+                ? "text-white"
+                : "bg-primary text-primary-content"
+            }`}
           >
             {initials}
           </div>
-          <div className="absolute -bottom-1 -right-1 size-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] text-white">
+          <div className="absolute -bottom-1 -right-1 size-5 bg-primary text-primary-content rounded-full border-2 border-base-100 flex items-center justify-center">
             <Users size={10} />
           </div>
         </div>
 
         <div className="flex-1 min-w-0 text-left">
           <div className="flex justify-between items-center mb-1">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate text-[16px]">
+            <h3 className="font-semibold text-base-content truncate text-[16px]">
               {workspace.name}
             </h3>
-            <span className="text-[12px] text-slate-400 font-medium">Group</span>
+            <span className="text-[12px] text-base-content/40 font-medium">Group</span>
           </div>
-          <p className="text-[14px] text-slate-500 truncate">
+          <p className="text-[14px] text-base-content/50 truncate">
             {workspace.description || ""}
           </p>
         </div>
@@ -157,22 +161,22 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
         data-context="conversation"
         data-user-id={user._id}
         onClick={() => setSelectedUser(user)}
-        className={`w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 border-b border-slate-50 dark:border-slate-800/50 relative overflow-hidden group ${
-          isSelected 
-            ? "bg-slate-50 dark:bg-slate-800/50" 
-            : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+        className={`w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 border-b border-base-300 relative overflow-hidden group ${
+          isSelected
+            ? "bg-base-300"
+            : "hover:bg-base-200"
         }`}
       >
         <div className="relative flex-shrink-0">
-          <Avatar src={user.profilePic} size="lg" className="ring-2 ring-transparent group-hover:ring-primary/20" />
+          <Avatar user={user} className="size-12 ring-2 ring-transparent group-hover:ring-primary/20" />
           {isOnline && (
-            <div className="absolute bottom-0 right-0 size-3.5 bg-[#00FF88] rounded-full border-2 border-white dark:border-slate-800 shadow-sm" />
+            <div className="absolute bottom-0 right-0 size-3.5 bg-success rounded-full border-2 border-base-100" />
           )}
         </div>
 
         <div className="flex-1 min-w-0 text-left">
           <div className="flex justify-between items-center mb-1">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate text-[16px] flex items-center gap-1.5">
+            <h3 className="font-semibold text-base-content truncate text-[16px] flex items-center gap-1.5">
               {user.fullName}
               <Link
                 to={`/u/${getUserHandle(user).replace("@", "")}`}
@@ -182,19 +186,19 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
                 {getUserHandle(user)}
               </Link>
             </h3>
-            <span className="text-[12px] text-slate-400 font-medium">{lastTime}</span>
+            <span className="text-[12px] text-base-content/40 font-medium">{lastTime}</span>
           </div>
-          
+
           <div className="flex justify-between items-center">
-            <p className={`text-[14px] truncate ${user.unreadCount > 0 ? "text-slate-900 dark:text-slate-100 font-medium" : "text-slate-500"}`}>
+            <p className={`text-[14px] truncate ${user.unreadCount > 0 ? "text-base-content font-medium" : "text-base-content/50"}`}>
               {lastMessage?.senderId === authUser._id && <span className="text-primary mr-1 font-bold">You:</span>}
               {lastMessage?.text || "No messages yet"}
             </p>
-            
+
             {user.unreadCount > 0 ? (
-              <div className="ml-2 px-2 py-0.5 min-w-[20px] h-5 rounded-full bg-gradient-to-br from-[#00D4FF] to-[#0080FF] flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-primary/20">
+              <span className="badge badge-primary ml-2 text-[11px] font-bold">
                 {user.unreadCount}
-              </div>
+              </span>
             ) : (
               lastMessage?.senderId === authUser._id && (
                 <CheckCircle2 size={14} className="text-primary/40 ml-2" />
@@ -211,27 +215,27 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
   };
 
   return (
-    <aside className="h-full w-full bg-white dark:bg-surface-dark flex flex-col relative overflow-hidden">
-      {/* Premium Header */}
-      <div className="px-5 py-5 border-b border-slate-50 dark:border-slate-800/50 backdrop-blur-xl bg-white/80 dark:bg-surface-dark/80 sticky top-0 z-20">
+    <aside className="h-full w-full bg-base-100 flex flex-col relative overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-5 border-b border-base-300 bg-base-100 sticky top-0 z-20">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="size-9 rounded-xl bg-gradient-to-br from-[#00D4FF] to-[#0080FF] flex items-center justify-center shadow-lg shadow-primary/30">
-              <Zap size={20} className="text-white fill-white" />
+            <div className="size-9 rounded-xl bg-primary flex items-center justify-center">
+              <Zap size={20} className="text-primary-content fill-current" />
             </div>
-            <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">Blink</h1>
+            <h1 className="text-[26px] font-bold tracking-tight text-base-content">Blink</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("sidebar-create-server"))}
-              className="p-2 text-slate-500 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+              className="p-2 text-base-content/50 hover:text-primary hover:bg-base-200 rounded-xl transition-all"
               title="Create Group"
             >
               <Plus size={22} />
             </button>
             <button
               onClick={() => searchRef.current?.focus()}
-              className="p-2 text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+              className="p-2 text-base-content/50 hover:text-primary hover:bg-base-200 rounded-xl transition-all"
             >
               <Search size={22} />
             </button>
@@ -239,14 +243,14 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
         </div>
 
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 group-focus-within:text-primary transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-base-content/40 group-focus-within:text-primary transition-colors pointer-events-none" />
           <input
             type="text"
             placeholder="Search messages or people"
             value={searchInput}
             onChange={handleSearch}
             ref={searchRef}
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-transparent focus:border-primary/20 focus:bg-white dark:focus:bg-slate-900 rounded-2xl text-[14px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all"
+            className="input input-bordered w-full pl-11 pr-4 text-sm placeholder:text-base-content/40"
           />
         </div>
       </div>
@@ -261,11 +265,11 @@ import { formatMessageTime, getUserHandle } from "../lib/utils";
         <div className="pb-20">
           {pinnedItems.length === 0 && unpinnedItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-10 text-center">
-              <div className="size-16 rounded-3xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <MessageSquare className="size-8 text-slate-300" />
+              <div className="size-16 rounded-3xl bg-base-200 flex items-center justify-center mb-4">
+                <MessageSquare className="size-8 text-base-content/40" />
               </div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">No chats yet</h3>
-              <p className="text-slate-400 text-sm">Start a conversation with your friends or groups!</p>
+              <h3 className="font-semibold text-base-content mb-1">No chats yet</h3>
+              <p className="text-base-content/50 text-sm">Start a conversation with your friends or groups!</p>
             </div>
           ) : (
             <>

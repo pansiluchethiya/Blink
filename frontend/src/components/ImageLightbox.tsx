@@ -175,11 +175,11 @@ const ImageLightbox = () => {
   return (
     <div className="fixed inset-0 z-[20000] flex flex-col justify-between bg-black/98 backdrop-blur-md animate-in fade-in duration-300 select-none">
       {/* Top Header Panel (Responsive Layout with Autoplay, Sender info, and Forwarding controls) */}
-      <div className="p-3 sm:p-4 flex items-center justify-between z-10 bg-gradient-to-b from-black/90 to-transparent">
+      <div className="p-3 sm:p-4 flex items-center justify-between z-10 bg-base-200 from-black/90 to-transparent">
         <div className="flex items-center gap-3 sm:gap-4 max-w-[60%]">
           <button 
             onClick={() => setLightboxImage(null)}
-            className="size-9 sm:size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors active:scale-95 flex-shrink-0"
+            className="size-9 sm:size-10 rounded-full bg-base-100/10 hover:bg-base-100/20 text-base-content flex items-center justify-center transition-colors active:scale-95 flex-shrink-0"
             title="Close (Esc)"
           >
             <X size={20} className="sm:w-[22px] sm:h-[22px]" />
@@ -191,22 +191,22 @@ const ImageLightbox = () => {
               <img 
                 src={senderInfo.avatar} 
                 alt="" 
-                className="size-7 sm:size-8 rounded-full object-cover border border-white/15 shadow-sm"
+                className="size-7 sm:size-8 rounded-full object-cover border border-base-100/15 shadow-sm"
               />
               <div className="flex flex-col min-w-0 leading-tight">
-                <span className="text-white text-xs sm:text-sm font-semibold truncate">
+                <span className="text-base-content text-xs sm:text-sm font-semibold truncate">
                   {senderInfo.name}
                 </span>
-                <span className="text-white/40 text-[9px] sm:text-[11px] font-medium truncate">
+                <span className="text-base-content/40 text-[9px] sm:text-[11px] font-medium truncate">
                   {formatDistanceToNow(activeMessage!.createdAt)}
                 </span>
               </div>
             </div>
           ) : (
             <div className="flex flex-col">
-              <span className="text-white text-xs sm:text-sm font-semibold">Media Viewer</span>
+              <span className="text-base-content text-xs sm:text-sm font-semibold">Media Viewer</span>
               {imageUrls.length > 1 && (
-                <span className="text-white/40 text-[10px] sm:text-xs font-medium">
+                <span className="text-base-content/40 text-[10px] sm:text-xs font-medium">
                   {currentIndex + 1} of {imageUrls.length}
                 </span>
               )}
@@ -235,33 +235,33 @@ const ImageLightbox = () => {
           <div className="hidden sm:flex items-center gap-1">
             <button 
               onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
-              className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors active:scale-95"
+              className="size-8 rounded-full bg-base-100/10 hover:bg-base-100/20 text-base-content flex items-center justify-center transition-colors active:scale-95"
               title="Zoom Out"
             >
               <ZoomOut size={16} />
             </button>
             <button 
               onClick={() => setZoom(1)}
-              className="px-2.5 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition-colors active:scale-95"
+              className="px-2.5 h-8 rounded-full bg-base-100/10 hover:bg-base-100/20 text-base-content text-[11px] font-bold transition-colors active:scale-95"
               title="Reset Zoom"
             >
               {Math.round(zoom * 100)}%
             </button>
             <button 
               onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
-              className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors active:scale-95"
+              className="size-8 rounded-full bg-base-100/10 hover:bg-base-100/20 text-base-content flex items-center justify-center transition-colors active:scale-95"
               title="Zoom In"
             >
               <ZoomIn size={16} />
             </button>
-            <div className="w-px h-5 bg-white/10 mx-1" />
+            <div className="w-px h-5 bg-base-100/10 mx-1" />
           </div>
 
           {/* Quick Forward button */}
           {activeMessage && (
             <button 
               onClick={() => setIsForwardOpen(true)}
-              className="size-8 sm:size-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors active:scale-95"
+              className="size-8 sm:size-9 rounded-full bg-base-100/10 hover:bg-base-100/20 text-base-content flex items-center justify-center transition-colors active:scale-95"
               title="Forward Message"
             >
               <Share2 size={16} />
@@ -270,7 +270,7 @@ const ImageLightbox = () => {
 
           <button 
             onClick={handleDownload}
-            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-primary text-white flex items-center gap-1.5 hover:bg-primary/90 transition-colors font-bold text-xs sm:text-sm shadow-xl active:scale-95"
+            className="h-8 sm:h-9 px-3 sm:px-4 rounded-full bg-primary text-base-content flex items-center gap-1.5 hover:bg-primary/90 transition-colors font-bold text-xs sm:text-sm shadow-xl active:scale-95"
           >
             <Download size={14} className="sm:w-[16px] sm:h-[16px]" />
             Download
@@ -288,7 +288,7 @@ const ImageLightbox = () => {
         {imageUrls.length > 1 && currentIndex > 0 && (
           <button
             onClick={handlePrev}
-            className="hidden sm:flex absolute left-6 z-10 size-11 rounded-full bg-black/45 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20 text-white items-center justify-center transition-all hover:scale-105 active:scale-95"
+            className="hidden sm:flex absolute left-6 z-10 size-11 rounded-full bg-black/45 backdrop-blur-md border border-base-100/10 hover:bg-base-100/10 hover:border-base-100/20 text-base-content items-center justify-center transition-all hover:scale-105 active:scale-95"
             title="Previous (Left Arrow)"
           >
             <ChevronLeft size={24} />
@@ -313,7 +313,7 @@ const ImageLightbox = () => {
         {imageUrls.length > 1 && currentIndex < imageUrls.length - 1 && (
           <button
             onClick={handleNext}
-            className="hidden sm:flex absolute right-6 z-10 size-11 rounded-full bg-black/45 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20 text-white items-center justify-center transition-all hover:scale-105 active:scale-95"
+            className="hidden sm:flex absolute right-6 z-10 size-11 rounded-full bg-black/45 backdrop-blur-md border border-base-100/10 hover:bg-base-100/10 hover:border-base-100/20 text-base-content items-center justify-center transition-all hover:scale-105 active:scale-95"
             title="Next (Right Arrow)"
           >
             <ChevronRight size={24} />
@@ -322,12 +322,12 @@ const ImageLightbox = () => {
       </div>
 
       {/* Bottom Panel (Caption, Thumbnail Strip & Interaction Tips) */}
-      <div className="p-4 sm:p-6 bg-gradient-to-t from-black/90 to-transparent flex flex-col items-center gap-3 sm:gap-4 z-10">
+      <div className="p-4 sm:p-6 bg-base-200 from-black/90 to-transparent flex flex-col items-center gap-3 sm:gap-4 z-10">
         
         {/* Caption Overlay */}
         {caption && (
           <div 
-            className="w-full max-w-[600px] px-4 py-3 bg-black/60 border border-white/10 backdrop-blur-md rounded-2xl text-center text-white text-sm leading-relaxed animate-in slide-in-from-bottom-3 duration-200"
+            className="w-full max-w-[600px] px-4 py-3 bg-black/60 border border-base-100/10 backdrop-blur-md rounded-2xl text-center text-base-content text-sm leading-relaxed animate-in slide-in-from-bottom-3 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="line-clamp-3 overflow-y-auto max-h-[100px] select-text">
@@ -339,7 +339,7 @@ const ImageLightbox = () => {
         {imageUrls.length > 1 && (
           <div 
             ref={thumbnailContainerRef}
-            className="flex items-center gap-1.5 sm:gap-2 max-w-full overflow-x-auto p-1.5 sm:p-2 bg-black/40 backdrop-blur-xl border border-white/5 rounded-xl sm:rounded-2xl scrollbar-none"
+            className="flex items-center gap-1.5 sm:gap-2 max-w-full overflow-x-auto p-1.5 sm:p-2 bg-black/40 backdrop-blur-xl border border-base-100/5 rounded-xl sm:rounded-2xl scrollbar-none"
           >
             {imageUrls.map((url, idx) => (
               <button
@@ -357,12 +357,12 @@ const ImageLightbox = () => {
           </div>
         )}
         
-        <div className="text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 sm:gap-3 text-center px-4">
+        <div className="text-base-content/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 sm:gap-3 text-center px-4">
           <span className="hidden sm:inline">Arrow keys to browse</span>
           <span className="sm:hidden">Swipe left / right to browse</span>
-          <div className="w-1 h-1 rounded-full bg-white/20" />
+          <div className="w-1 h-1 rounded-full bg-base-100/20" />
           <span>Double-tap or Pinch to zoom</span>
-          <div className="w-1 h-1 rounded-full bg-white/20" />
+          <div className="w-1 h-1 rounded-full bg-base-100/20" />
           <span>Tap outside to close</span>
         </div>
       </div>

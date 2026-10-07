@@ -32,7 +32,7 @@ const LinkPreview = ({ url, isSelf }) => {
       className={`block mt-2 rounded-xl overflow-hidden border transition-all hover:scale-[1.01] active:scale-[0.99] ${
         isSelf 
           ? "bg-white/10 border-white/20 text-white" 
-          : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100"
+          : "bg-base-200 border-base-300 text-base-content"
       }`}
     >
       {metadata.image && (

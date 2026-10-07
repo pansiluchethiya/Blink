@@ -81,25 +81,25 @@ const ChatPrivacyMenu = ({
   return (
     <div 
       data-context="modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm sm:p-4 transition-all duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-base-200/60 backdrop-blur-sm sm:p-4 transition-all duration-200"
       onClick={onClose}
     >
       <div 
-        className="w-full sm:max-w-md bg-white dark:bg-slate-800 shadow-2xl sm:rounded-3xl border-t sm:border border-slate-200 dark:border-slate-700 overflow-hidden animate-fadeIn mobile-bottom-sheet h-fit max-h-[90dvh] flex flex-col"
+        className="w-full sm:max-w-md bg-base-100 shadow-2xl sm:rounded-3xl border-t sm:border border-base-300 overflow-hidden animate-fadeIn mobile-bottom-sheet h-fit max-h-[90dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle for mobile drag (aesthetic) */}
         <div className="flex justify-center pt-3 sm:hidden">
-          <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full" />
+          <div className="w-12 h-1.5 bg-base-200 rounded-full" />
         </div>
 
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/50">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-base-300">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">Privacy Settings</p>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate max-w-[200px]">{selectedUser.fullName || selectedUser.name}</h2>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-base-content/60">Privacy Settings</p>
+            <h2 className="text-lg font-bold text-base-content truncate max-w-[200px]">{selectedUser.fullName || selectedUser.name}</h2>
           </div>
           <button 
-            className="size-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" 
+            className="size-8 flex items-center justify-center bg-base-200 text-base-content/60 rounded-full hover:bg-base-200 transition-colors" 
             onClick={onClose}
           >
             <X size={18} />
@@ -108,14 +108,14 @@ const ChatPrivacyMenu = ({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-none">
           {/* Disappearing Messages Section */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 p-4">
+          <div className="rounded-2xl border border-base-300 bg-base-200/50 p-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="size-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+              <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Clock3 size={18} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Disappearing messages</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Auto-delete messages after a period</p>
+                <h3 className="font-bold text-base-content text-sm">Disappearing messages</h3>
+                <p className="text-[11px] text-base-content/60 font-medium">Auto-delete messages after a period</p>
               </div>
             </div>
             
@@ -127,8 +127,8 @@ const ChatPrivacyMenu = ({
                   onClick={() => setExpiryOption(option.value)}
                   className={`rounded-xl border py-2.5 text-xs font-bold transition-all duration-200 ${
                     expiryOption === option.value 
-                      ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20" 
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
+                      ? "border-primary bg-primary text-base-content shadow-md shadow-primary/10" 
+                      : "border-base-300 bg-base-100 text-base-content/60 hover:border-base-300"
                   }`}
                 >
                   {option.label}
@@ -139,21 +139,21 @@ const ChatPrivacyMenu = ({
             <button
               type="button"
               onClick={handleSaveExpiry}
-              className="mt-4 w-full py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-blue-500 dark:hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs transition-all active:scale-[0.98]"
+              className="mt-4 w-full py-2.5 bg-base-200 hover:bg-primary hover:text-base-content text-base-content/60 rounded-xl font-bold text-xs transition-all active:scale-[0.98]"
             >
               Update Preference
             </button>
           </div>
 
           {/* Chat Lock Section */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40 p-4">
+          <div className="rounded-2xl border border-base-300 bg-base-200/50 p-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="size-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+              <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Lock size={18} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Chat Lock</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Protect this chat with a secret PIN</p>
+                <h3 className="font-bold text-base-content text-sm">Chat Lock</h3>
+                <p className="text-[11px] text-base-content/60 font-medium">Protect this chat with a secret PIN</p>
               </div>
             </div>
             
@@ -162,21 +162,21 @@ const ChatPrivacyMenu = ({
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="Enter 4-digit PIN"
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm mb-3"
+              className="w-full px-4 py-2.5 bg-base-100 border border-base-300 rounded-xl text-base-content placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-3"
             />
             
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={locked ? handleUnlock : handleLock}
-                className="flex-[2] py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-xs transition-all active:scale-[0.98] shadow-md shadow-blue-500/10"
+                className="flex-[2] py-2.5 bg-primary hover:bg-primary text-base-content rounded-xl font-bold text-xs transition-all active:scale-[0.98] shadow-md shadow-primary/10"
               >
                 {locked ? "Unlock Conversation" : "Lock Conversation"}
               </button>
               <button
                 type="button"
                 onClick={() => setPin("")}
-                className="flex-1 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs transition-all active:scale-[0.98]"
+                className="flex-1 py-2.5 bg-base-200 text-base-content/60 rounded-xl font-bold text-xs transition-all active:scale-[0.98]"
               >
                 Clear
               </button>
@@ -184,7 +184,7 @@ const ChatPrivacyMenu = ({
           </div>
 
           {statusMessage && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 text-center animate-fadeIn">
+            <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary text-center animate-fadeIn">
               {statusMessage}
             </div>
           )}

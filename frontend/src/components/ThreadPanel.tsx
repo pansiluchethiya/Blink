@@ -15,30 +15,30 @@ const ThreadPanel = ({ message, onClose }) => {
   };
 
   return (
-    <div className="w-80 h-full bg-slate-900 border-l border-slate-850 flex flex-col z-40">
-      <div className="h-16 px-4 border-b border-slate-850 flex items-center justify-between">
-        <h3 className="font-bold text-slate-200">Thread</h3>
-        <button onClick={onClose}><X className="w-5 h-5 text-slate-400" /></button>
+    <div className="w-80 h-full bg-base-200 border-l border-base-300 flex flex-col z-40">
+      <div className="h-16 px-4 border-b border-base-300 flex items-center justify-between">
+        <h3 className="font-bold text-base-content">Thread</h3>
+        <button onClick={onClose}><X className="w-5 h-5 text-base-content/60" /></button>
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div className="bg-slate-800 p-3 rounded-lg text-sm text-slate-200">{message.text}</div>
+        <div className="bg-base-300 p-3 rounded-lg text-sm text-base-content">{message.text}</div>
         {messages.map((msg) => (
-          <div key={msg._id} className="text-sm text-slate-300">
-            <span className="font-bold text-slate-100">{msg.senderId?.fullName}: </span>
+          <div key={msg._id} className="text-sm text-base-content">
+            <span className="font-bold text-base-content">{msg.senderId?.fullName}: </span>
             {msg.text}
           </div>
         ))}
       </div>
 
-      <form onSubmit={handleReply} className="p-3 border-t border-slate-850 flex gap-2">
+      <form onSubmit={handleReply} className="p-3 border-t border-base-300 flex gap-2">
         <input 
           value={text} 
           onChange={(e) => setText(e.target.value)}
-          className="flex-grow bg-slate-800 text-slate-100 rounded-lg p-2 text-sm"
+          className="flex-grow bg-base-300 text-base-content rounded-lg p-2 text-sm"
           placeholder="Reply..."
         />
-        <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg"><Send className="w-4 h-4" /></button>
+        <button type="submit" className="bg-primary text-base-content p-2 rounded-lg"><Send className="w-4 h-4" /></button>
       </form>
     </div>
   );

@@ -90,13 +90,13 @@ const ThemeBuilder: React.FC = () => {
         <div className="flex space-x-4">
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 transition"
+            className="px-4 py-2 bg-primary text-base-content rounded hover:bg-primary/80 transition"
           >
             Save Theme
           </button>
           <button
             onClick={handleReset}
-            className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+            className="px-4 py-2 bg-base-200 text-base-content rounded hover:bg-base-200 transition"
           >
             Reset to Default
           </button>

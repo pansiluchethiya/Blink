@@ -8,17 +8,18 @@ import MessageReactions from "./MessageReactions";
 import QuotedMessage from "./QuotedMessage";
 import ViewOnceMedia from "./ViewOnceMedia";
 import LinkPreview from "./LinkPreview";
+import Avatar from "./Avatar";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const MessageItem = ({ 
-  message, 
-  index, 
-  messagesLength, 
+const MessageItem = ({
+  message,
+  index,
+  messagesLength,
   messages,
-  selectedUser, 
-  activeMessageMenu, 
-  openMessageMenu = () => {}, 
+  selectedUser,
+  activeMessageMenu,
+  openMessageMenu = () => {},
   closeMessageMenu = () => {},
   handleLongPressStart = () => {},
   handleLongPressEnd = () => {},
@@ -67,10 +68,10 @@ const MessageItem = ({
 
   const commonBubbleClasses = `relative flex flex-col select-text px-4 py-2.5 shadow-sm transition-all no-callout group/bubble ${bubbleRoundness} message-bubble ${
     message.isDeleted
-      ? "bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-md text-slate-400 dark:text-slate-500 italic font-normal border border-slate-200/20"
+      ? "bg-base-200/50 text-base-content/40 italic font-normal border border-base-300"
       : isSelf
-        ? "message-bubble-self bg-gradient-to-br from-blue-500/15 to-indigo-600/15 dark:from-blue-500/20 dark:to-indigo-500/20 backdrop-blur-md text-slate-900 dark:text-slate-100 border border-blue-500/25 dark:border-blue-500/30 shadow-md shadow-blue-500/5 hover:shadow-blue-500/10 hover:border-blue-500/40"
-        : "message-bubble-other bg-white/70 dark:bg-slate-900/60 backdrop-blur-md text-slate-900 dark:text-slate-100 border border-white/30 dark:border-slate-800/60 shadow-sm hover:border-slate-300 dark:hover:border-slate-700"
+        ? "message-bubble-self chat-bubble chat-bubble-primary bg-primary text-primary-content border border-primary"
+        : "message-bubble-other bg-base-200 text-base-content border border-base-300"
   } hover:cursor-pointer`;
 
   const marginBottom = isNextSameSender ? "mb-1" : "mb-4";
@@ -88,15 +89,14 @@ const MessageItem = ({
         <div className={`flex gap-2 items-end w-full ${showAvatar ? "" : "ml-[44px]"} msg-bubble-container`}>
           {showAvatar && (
             <div className="flex-shrink-0 select-none mb-0">
-              <img
-                src={selectedUser?.profilePic || "/avatar.png"}
-                alt={selectedUser?.fullName || "User"}
-                className="size-9 rounded-full object-cover shadow-sm border border-slate-200 dark:border-slate-700"
+              <Avatar
+                user={selectedUser}
+                className="size-9 border border-base-300"
               />
             </div>
           )}
           <div className="flex flex-col items-start min-w-0 flex-1">
-             <MessageContent 
+             <MessageContent
                isSelf={isSelf}
                message={message}
                selectedUser={selectedUser}
@@ -116,7 +116,7 @@ const MessageItem = ({
 
       {isSelf && (
         <div className="msg-bubble-container">
-          <MessageContent 
+          <MessageContent
             isSelf={isSelf}
             message={message}
             selectedUser={selectedUser}
@@ -136,14 +136,14 @@ const MessageItem = ({
   );
 };
 
-const MessageContent = ({ 
-  isSelf, 
-  message, 
-  selectedUser, 
+const MessageContent = ({
+  isSelf,
+  message,
+  selectedUser,
   showNameHeader,
-  handleDoubleClick, 
-  handleLongPressStart, 
-  handleLongPressEnd, 
+  handleDoubleClick,
+  handleLongPressStart,
+  handleLongPressEnd,
   handleMenuClick,
   markViewOnceOpened,
   commonBubbleClasses,
@@ -164,7 +164,7 @@ const MessageContent = ({
           <span>{selectedUser?.fullName}</span>
           <Link
             to={`/u/${getUserHandle(selectedUser).replace("@", "")}`}
-            className="text-[11px] text-slate-400 font-normal hover:underline cursor-pointer transition-opacity hover:opacity-85"
+            className="text-[11px] text-base-content/40 font-normal hover:underline cursor-pointer transition-opacity hover:opacity-85"
             onClick={(e) => e.stopPropagation()}
           >
             {getUserHandle(selectedUser)}
@@ -195,9 +195,9 @@ const MessageContent = ({
               <button
                 onClick={handleMenuClick}
                 className={`p-1 rounded-full backdrop-blur-md transition-all ${
-                  isSelf 
-                    ? "bg-black/10 hover:bg-black/20 text-white/90" 
-                    : "bg-slate-100/80 hover:bg-slate-200/80 text-slate-500"
+                  isSelf
+                    ? "bg-black/10 hover:bg-black/20 text-primary-content"
+                    : "bg-base-200 hover:bg-base-300 text-base-content/50"
                 }`}
               >
                 <ChevronDown size={14} />
@@ -238,7 +238,7 @@ const MessageContent = ({
                       <source src={message.file.url} type={message.file.type} />
                     </video>
                   ) : message.file.type.startsWith("audio/") ? (
-                    <div className={`p-2 rounded-xl min-w-[200px] ${isSelf ? "bg-white/10" : "bg-slate-50 dark:bg-slate-900/50"}`}>
+                    <div className={`p-2 rounded-xl min-w-[200px] ${isSelf ? "bg-black/10" : "bg-base-300/50"}`}>
                       <audio controls className="w-full h-8">
                         <source src={message.file.url} type={message.file.type} />
                       </audio>
@@ -249,12 +249,12 @@ const MessageContent = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                        isSelf 
-                          ? "bg-white/10 hover:bg-white/15 text-white" 
-                          : "bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-900 dark:text-slate-100"
+                        isSelf
+                          ? "bg-black/10 hover:bg-black/20 text-primary-content"
+                          : "bg-base-300/50 hover:bg-base-300 text-base-content"
                       }`}
                     >
-                      <div className={`p-2 rounded-lg ${isSelf ? "bg-white/20" : "bg-primary/10 text-primary"}`}>
+                      <div className={`p-2 rounded-lg ${isSelf ? "bg-black/10" : "bg-primary/10 text-primary"}`}>
                         <Paperclip size={16} />
                       </div>
                       <div className="flex flex-col min-w-0">
@@ -269,7 +269,7 @@ const MessageContent = ({
               )}
               {message.text && (
                 <div className="flex flex-col">
-                  <div className="text-[15px] leading-[1.5] break-words font-medium pr-4 prose dark:prose-invert max-w-none">
+                  <div className="text-[15px] leading-[1.5] break-words font-medium pr-4 prose max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.text}
                     </ReactMarkdown>
@@ -291,19 +291,19 @@ const MessageContent = ({
           )}
 
           <div className={`flex items-center gap-1.5 mt-1.5 -mb-0.5 ${isSelf ? "justify-end" : "justify-start"}`}>
-            <span className={`text-[11px] font-medium ${isSelf ? "text-white/70" : "text-slate-400"}`}>
+            <span className={`text-[11px] font-medium ${isSelf ? "text-primary-content/70" : "text-base-content/40"}`}>
               {formatMessageTime(message.createdAt)}
             </span>
             {message.isPinned && !message.isDeleted && (
-              <Pin size={10} className="text-amber-400 fill-amber-400" />
+              <Pin size={10} className="text-primary fill-primary" />
             )}
             {isSelf && !message.isDeleted && (
               message.isSending ? (
-                <span className="text-[9px] text-white/60 italic animate-pulse tracking-wide select-none">sending</span>
+                <span className="text-[9px] text-primary-content/60 italic animate-pulse tracking-wide select-none">sending</span>
               ) : message.isRead ? (
-                <CheckCheck size={14} className="text-white shadow-sm" />
+                <CheckCheck size={14} className="text-primary-content" />
               ) : message.deliveredAt ? (
-                <Check size={14} className="text-white/50" />
+                <Check size={14} className="text-primary-content/60" />
               ) : null
             )}
           </div>

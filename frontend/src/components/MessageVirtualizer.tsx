@@ -170,7 +170,7 @@ const MessageVirtualizer = ({
       {/* Loading Indicator at the top */}
       {isLoadingMore && (
         <div className="flex justify-center py-4 bg-transparent w-full">
-          <Loader size={18} className="animate-spin text-blue-500" />
+          <Loader size={18} className="animate-spin text-primary" />
         </div>
       )}
 

@@ -64,7 +64,7 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-background-dark text-slate-900 dark:text-slate-100 relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-base-100 text-base-content relative">
       {/* 1. Sidebar Rail (Desktop Only) - Slim vertical nav */}
       <div className="hidden md:block">
         <SidebarRail activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -72,7 +72,7 @@ const AppLayout = () => {
       
       {/* 2. Side Column (Conversations, Users, Groups, etc.) */}
       <div className={`
-        w-full md:w-[380px] flex-shrink-0 border-r border-border dark:border-border-dark flex flex-col h-full 
+        w-full md:w-[380px] flex-shrink-0 border-r border-border flex flex-col h-full 
         glass transition-all duration-300 ease-in-out
         ${(selectedUser || selectedWorkspace) ? "hidden md:flex" : "flex"} 
         ${activeTab !== 'chats' ? 'pb-16 md:pb-0' : 'pb-16 md:pb-0'}

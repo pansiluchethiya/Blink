@@ -5,6 +5,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import MessageItem from "./MessageItem";
 import MessageVirtualizer from "./MessageVirtualizer";
+import Avatar from "./Avatar";
 import UserProfilePanel from "./UserProfilePanel";
 import MessageActions from "./MessageActions";
 import ChatActionDrawer from "./ChatActionDrawer";
@@ -108,22 +109,18 @@ const ChatContainer = () => {
       return (
         <div className="max-w-[800px] w-full mx-auto px-4 py-2">
           <div className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="size-9 rounded-full bg-slate-200 dark:bg-slate-800 flex-shrink-0 shadow-sm" aria-label="Typing...">
-              <img
-                src={selectedUser?.profilePic || "/avatar.png"}
-                alt={selectedUser?.fullName || "User"}
-                className="w-full h-full rounded-full object-cover border border-slate-250 dark:border-slate-700"
-              />
+            <div className="flex-shrink-0" aria-label="Typing...">
+              <Avatar user={selectedUser} className="size-9 border border-base-300" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-400 font-semibold mb-0.5 ml-1 select-none">
+              <span className="text-[10px] text-base-content/40 font-semibold mb-0.5 ml-1 select-none">
                 {selectedUser?.fullName || "Someone"} is typing
               </span>
-              <div className="px-4 py-2 rounded-2xl bg-surface dark:bg-surface-dark border border-border dark:border-border-dark shadow-soft w-fit">
+              <div className="px-4 py-2 rounded-2xl bg-base-200 border border-base-300 w-fit">
                  <div className="flex gap-1.5 items-center">
-                   <span className="size-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
-                   <span className="size-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
-                   <span className="size-1.5 rounded-full bg-slate-400 animate-bounce" />
+                   <span className="size-1.5 rounded-full bg-base-content/40 animate-bounce [animation-delay:-0.3s]" />
+                   <span className="size-1.5 rounded-full bg-base-content/40 animate-bounce [animation-delay:-0.15s]" />
+                   <span className="size-1.5 rounded-full bg-base-content/40 animate-bounce" />
                  </div>
               </div>
             </div>
@@ -137,10 +134,8 @@ const ChatContainer = () => {
     return (
       <div className="max-w-[800px] w-full mx-auto px-4 py-0.5">
         {showDateSeparator && (
-          <div className="flex justify-center my-6">
-            <span className="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest backdrop-blur-sm">
-              {formatDateLabel(message.createdAt)}
-            </span>
+          <div className="date-separator">
+            <span>{formatDateLabel(message.createdAt)}</span>
           </div>
         )}
         <MessageItem

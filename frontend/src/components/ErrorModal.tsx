@@ -74,34 +74,34 @@ const ErrorModal = ({ error, onClose, onRetry }) => {
 
   return (
     <div data-context="modal" className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={handleClose} />
-      <div className={`relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-xl max-w-md w-full transform transition-all duration-300 ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'} overflow-hidden`}>
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+      <div className="absolute inset-0 bg-base-200/60 backdrop-blur-sm" onClick={handleClose} />
+      <div className={`relative bg-base-100 border border-base-300 rounded-3xl shadow-xl max-w-md w-full transform transition-all duration-300 ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'} overflow-hidden`}>
+        <div className="flex items-center justify-between p-6 border-b border-base-300">
           <div className="flex items-center gap-3">
             {errorDetails.icon}
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{errorDetails.title}</h3>
+            <h3 className="text-lg font-bold text-base-content">{errorDetails.title}</h3>
           </div>
-          <button onClick={handleClose} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-500 dark:hover:text-slate-200 transition-colors">
+          <button onClick={handleClose} className="p-1.5 rounded-xl hover:bg-base-200 text-base-content/60 hover:text-base-content/60 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="p-6">
-          <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">{errorDetails.message}</p>
+          <p className="text-base-content/60 text-sm mb-4">{errorDetails.message}</p>
           <div className="mb-6">
-            <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">What you can try:</h4>
+            <h4 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider mb-2">What you can try:</h4>
             <ul className="space-y-1.5">
               {errorDetails.suggestions.map((suggestion, index) => (
-                <li key={index} className="text-xs text-slate-500 dark:text-slate-400 font-semibold flex items-start gap-2">
-                  <span className="text-blue-500 dark:text-blue-400 mt-1">•</span>
+                <li key={index} className="text-xs text-base-content/60 font-semibold flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
                   {suggestion}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="flex gap-3 justify-end border-t border-slate-100 dark:border-slate-700/50 pt-4 mt-2">
-            <button onClick={handleClose} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs transition-all active:scale-[0.98]">Close</button>
+          <div className="flex gap-3 justify-end border-t border-base-300 pt-4 mt-2">
+            <button onClick={handleClose} className="px-4 py-2 bg-base-200 hover:bg-base-200 text-base-content/60 rounded-xl font-semibold text-xs transition-all active:scale-[0.98]">Close</button>
             {onRetry && errorDetails.type !== 'auth' && (
-              <button onClick={handleRetry} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl font-semibold text-xs transition-all active:scale-[0.98] shadow-sm flex items-center gap-1.5">
+              <button onClick={handleRetry} className="px-4 py-2 bg-primary hover:bg-primary text-base-content rounded-xl font-semibold text-xs transition-all active:scale-[0.98] shadow-sm flex items-center gap-1.5">
                 <RefreshCw className="w-3.5 h-3.5 mr-1" />
                 Try Again
               </button>

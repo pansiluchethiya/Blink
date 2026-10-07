@@ -35,15 +35,15 @@ const NotificationBell = ({ hideText = false, dropdownClass = "right-0 mt-2 orig
     <div className="relative" ref={bellRef}>
       <button
         className={hideText 
-          ? `size-10 flex items-center justify-center rounded-xl bg-slate-200/50 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all duration-200 active:scale-95 ${unreadCount > 0 ? "text-blue-500 dark:text-blue-400" : ""}`
-          : `px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm rounded-xl font-medium flex items-center gap-2 transition-all active:scale-[0.98] ${unreadCount > 0 ? "text-blue-500 dark:text-blue-400" : ""}`
+          ? `size-10 flex items-center justify-center rounded-xl bg-base-200/50 hover:bg-base-200 text-base-content/60 transition-all duration-200 active:scale-95 ${unreadCount > 0 ? "text-primary" : ""}`
+          : `px-3 py-1.5 bg-base-200 hover:bg-base-200 text-base-content/60 text-sm rounded-xl font-medium flex items-center gap-2 transition-all active:scale-[0.98] ${unreadCount > 0 ? "text-primary" : ""}`
         }
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="relative">
           <Bell className="size-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-blue-500 text-white dark:bg-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 bg-primary text-base-content text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center animate-pulse">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}

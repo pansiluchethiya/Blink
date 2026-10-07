@@ -6,6 +6,8 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useFriendStore } from "../store/useFriendStore";
 import { Button, IconButton } from "./ui";
 import EmojiPicker from "./EmojiPicker";
+import ReplyPreview from "./ReplyPreview";
+import EditingIndicator from "./EditingIndicator";
 import { EMOJIS, HELP_CENTER_EMAIL } from "../constants";
 
 const MessageInput = () => {
@@ -21,14 +23,14 @@ const MessageInput = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiSuggestions, setEmojiSuggestions] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const recordingIntervalRef = useRef(null);
   const inputRef = useRef(null);
-  
+
   const { sendMessage, selectedUser, editingMessageId, editMessage, replyingToMessage, drafts, setDraft, pendingAttachment, setPendingAttachment } = useChatStore();
   const { socket, authUser } = useAuthStore();
   const { friends, requests, sentRequests } = useFriendStore();
@@ -74,7 +76,7 @@ const MessageInput = () => {
   const isFriend = friends.some((f) => String(f._id) === String(selectedUser?._id));
   const hasIncoming = requests.some((r) => r.requesterId && String(r.requesterId._id) === String(selectedUser?._id));
   const hasOutgoing = sentRequests.some((r) => r.receiverId && String(r.receiverId._id) === String(selectedUser?._id));
-  
+
   const isHelpCenter = selectedUser?.email === HELP_CENTER_EMAIL || authUser?.email === HELP_CENTER_EMAIL;
   const canChat = isSelf || isFriend || isHelpCenter;
 
@@ -145,7 +147,7 @@ const MessageInput = () => {
     const newText = e.target.value;
     if (newText.length > 1024) return;
     setText(newText);
-    
+
     const lastWord = newText.split(" ").pop();
     if (lastWord.startsWith(":") && lastWord.length > 1) {
       const query = lastWord.substring(1).toLowerCase();
@@ -221,11 +223,11 @@ const MessageInput = () => {
 
   if (selectedUser && !canChat) {
     return (
-      <div className="w-full px-4 sm:px-6 py-4 bg-surface dark:bg-surface-dark border-t border-border dark:border-border-dark flex-shrink-0 select-none text-center transition-colors duration-200">
-        <div className="max-w-[800px] w-full mx-auto py-3 px-4 bg-slate-100 dark:bg-slate-900/50 border border-dashed border-border dark:border-border-dark rounded-2xl">
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-            {hasIncoming ? "Accept their friend request to start chatting!" : 
-             hasOutgoing ? "Waiting for them to accept your friend request..." : 
+      <div className="w-full px-4 sm:px-6 py-4 bg-base-100 border-t border-base-300 flex-shrink-0 select-none text-center">
+        <div className="max-w-[800px] w-full mx-auto py-3 px-4 bg-base-200 border border-dashed border-base-300 rounded-2xl">
+          <p className="text-sm font-semibold text-base-content/50">
+            {hasIncoming ? "Accept their friend request to start chatting!" :
+             hasOutgoing ? "Waiting for them to accept your friend request..." :
              "You can only chat with users after becoming friends"}
           </p>
         </div>
@@ -234,19 +236,22 @@ const MessageInput = () => {
   }
 
   return (
-    <div className="w-full px-4 py-4 bg-white/10 dark:bg-surface-dark/10 backdrop-blur-xl border-t border-slate-50 dark:border-slate-800/50 flex-shrink-0 z-20 glass">
+    <div className="w-full px-4 py-4 bg-base-100 border-t border-base-300 flex-shrink-0 z-20">
       <div className="max-w-[800px] mx-auto relative">
-        
+
+        <ReplyPreview />
+        <EditingIndicator />
+
         {emojiSuggestions.length > 0 && (
-          <div className="absolute bottom-full mb-3 left-0 z-50 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn w-48">
+          <div className="absolute bottom-full mb-3 left-0 z-50 bg-base-100 border border-base-300 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn w-48">
             {emojiSuggestions.map((emoji) => (
               <button
                 key={emoji.name}
                 onClick={() => selectEmoji(emoji.char)}
-                className="px-4 py-2.5 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-[14px] transition-colors"
+                className="px-4 py-2.5 flex items-center gap-2 hover:bg-base-200 text-[14px] transition-colors"
               >
                 <span>{emoji.char}</span>
-                <span className="text-slate-400 dark:text-slate-500 text-[12px]">:{emoji.name}:</span>
+                <span className="text-base-content/50 text-[12px]">:{emoji.name}:</span>
               </button>
             ))}
           </div>
@@ -256,22 +261,22 @@ const MessageInput = () => {
           <div className="mb-4 flex flex-col gap-2 animate-fadeIn">
             <div className="relative inline-block group">
               {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xl" />
+                <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-2xl border border-base-300 shadow-xl" />
               ) : (
-                <div className="w-24 h-24 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xl">
+                <div className="w-24 h-24 flex items-center justify-center bg-base-200 rounded-2xl border border-base-300 shadow-xl">
                   <Paperclip size={28} className="text-primary" />
-                  <span className="ml-1 text-[10px] truncate max-w-[60px] text-slate-500">{filePreview?.name}</span>
+                  <span className="ml-1 text-[10px] truncate max-w-[60px] text-base-content/50">{filePreview?.name}</span>
                 </div>
               )}
-              <button 
-                onClick={removeAttachment} 
-                className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white dark:bg-slate-800 text-red-500 border border-slate-100 dark:border-slate-700 flex items-center justify-center transition-all hover:scale-110 shadow-lg"
+              <button
+                onClick={removeAttachment}
+                className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-base-100 text-error border border-base-300 flex items-center justify-center transition-all hover:scale-110 shadow-lg"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <label className="inline-flex items-center gap-2 text-[12px] text-slate-500 font-bold cursor-pointer hover:text-primary transition-colors">
-              <input type="checkbox" checked={isViewOnce} onChange={(e) => setIsViewOnce(e.target.checked)} className="w-4 h-4 text-primary border-slate-200 rounded focus:ring-primary/20" />
+            <label className="inline-flex items-center gap-2 text-[12px] text-base-content/50 font-bold cursor-pointer hover:text-base-content transition-colors">
+              <input type="checkbox" checked={isViewOnce} onChange={(e) => setIsViewOnce(e.target.checked)} className="w-4 h-4 text-primary border-base-300 rounded focus:ring-primary/20" />
               View once media
             </label>
           </div>
@@ -280,20 +285,20 @@ const MessageInput = () => {
         <div className="flex items-end gap-3">
           {/* Actions Container */}
           <div className="flex items-center gap-1 mb-1">
-            <IconButton 
-              size="lg" 
+            <IconButton
+              size="lg"
               onClick={() => imageInputRef.current?.click()}
-              className="text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full"
+              className="text-base-content/50 hover:text-base-content hover:bg-base-200 rounded-full"
             >
               <Paperclip size={22} />
             </IconButton>
           </div>
 
           {/* Main Input Area */}
-          <div className="flex-1 flex items-end bg-slate-50 dark:bg-slate-900/50 rounded-[28px] px-4 py-2 transition-all duration-300 focus-within:bg-white dark:focus-within:bg-slate-900 border border-transparent focus-within:border-primary/20 focus-within:ring-4 focus-within:ring-primary/5">
+          <div className="flex-1 flex items-end bg-base-200 rounded-full px-4 py-2 transition-all border border-transparent focus-within:border-primary/30">
             {isRecording ? (
-              <div className="flex-1 flex items-center gap-3 py-2 text-red-500 font-bold animate-pulse">
-                <div className="size-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
+              <div className="flex-1 flex items-center gap-3 py-2 text-error font-bold animate-pulse">
+                <div className="size-2 rounded-full bg-error" />
                 <span className="text-sm">Recording {formatTime(recordingTime)}</span>
               </div>
             ) : (
@@ -301,7 +306,7 @@ const MessageInput = () => {
                 ref={inputRef}
                 rows={1}
                 maxLength={1024}
-                className="flex-1 max-h-[150px] resize-none bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[15px] text-slate-900 dark:text-slate-100 placeholder-slate-400 leading-[1.6] py-2 pr-2"
+                className="flex-1 max-h-[150px] resize-none bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-[15px] text-base-content placeholder:text-base-content/40 leading-[1.6] py-2 pr-2"
                 placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
                 value={text}
                 onChange={handleTextChange}
@@ -315,12 +320,12 @@ const MessageInput = () => {
                 disabled={isSending}
               />
             )}
-            
+
             <div className="flex items-center self-end mb-1">
               <IconButton
                 size="md"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className={`${showEmojiPicker ? "text-primary" : "text-slate-400"} hover:text-primary rounded-full`}
+                className={`${showEmojiPicker ? "text-primary" : "text-base-content/50"} hover:text-base-content rounded-full`}
                 disabled={isSending || isRecording}
               >
                 <Smile size={22} />
@@ -339,14 +344,14 @@ const MessageInput = () => {
               <button
                 onClick={handleSendMessage}
                 disabled={isSending}
-                className="size-12 rounded-full bg-gradient-to-br from-[#00D4FF] to-[#0080FF] text-white flex items-center justify-center shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                className="btn btn-primary btn-circle size-12 shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
               >
-                {isSending ? <Loader className="animate-spin" size={20} /> : <Send size={20} className="fill-white" />}
+                {isSending ? <Loader className="animate-spin" size={20} /> : <Send size={20} />}
               </button>
             ) : (
               <button
                 onClick={isRecording ? stopRecording : startRecording}
-                className="size-12 rounded-full bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm border border-transparent hover:border-primary/10"
+                className="size-12 rounded-full bg-base-200 text-base-content/50 hover:text-base-content hover:bg-base-300 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm border border-base-300"
               >
                 <Mic size={22} />
               </button>
@@ -354,7 +359,7 @@ const MessageInput = () => {
           </div>
         </div>
       </div>
-      
+
       <input type="file" accept="image/*" className="hidden" ref={imageInputRef} onChange={handleImageChange} disabled={isSending} />
       <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} disabled={isSending} />
     </div>

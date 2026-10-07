@@ -368,7 +368,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
       {menu.visible && (
         <div
           ref={menuRef}
-          className="fixed z-[9999] bg-white/70 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/80 rounded-2xl shadow-2xl p-1.5 min-w-[220px] max-w-[260px] flex flex-col gap-0.5 select-none transition-all duration-150 animate-in fade-in zoom-in-95"
+          className="fixed z-[9999] bg-base-100/70 backdrop-blur-xl border border-base-300/50 rounded-2xl shadow-2xl p-1.5 min-w-[220px] max-w-[260px] flex flex-col gap-0.5 select-none transition-all duration-150 animate-in fade-in zoom-in-95"
           style={{
             top: menu.y,
             left: menu.x,
@@ -380,12 +380,12 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <>
               {/* Reactions strip */}
               {!menu.data.message.isDeleted && (
-                <div className="flex justify-between items-center px-2 py-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-850">
+                <div className="flex justify-between items-center px-2 py-1.5 mb-1.5 border-b border-base-300">
                   {["👍", "❤️", "😂", "🔥", "🚀"].map((emoji) => (
                     <button
                       key={emoji}
                       onClick={() => handleReaction(menu.data.message._id, emoji)}
-                      className="text-lg hover:scale-125 transition-transform p-1 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
+                      className="text-lg hover:scale-125 transition-transform p-1 rounded-lg hover:bg-base-200/50"
                     >
                       {emoji}
                     </button>
@@ -395,52 +395,52 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
               <button
                 onClick={() => handleReply(menu.data.message)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <MessageCircle size={15} className="text-slate-400" />
+                <MessageCircle size={15} className="text-base-content/60" />
                 Reply
               </button>
 
               {menu.data.message.text && (
                 <button
                   onClick={() => handleCopy(menu.data.message.text)}
-                  className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                  className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
                 >
-                  <Copy size={15} className="text-slate-400" />
+                  <Copy size={15} className="text-base-content/60" />
                   Copy Text
                 </button>
               )}
 
               <button
                 onClick={() => handlePin(menu.data.message._id, menu.data.message.isPinned)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Pin size={15} className="text-slate-400" />
+                <Pin size={15} className="text-base-content/60" />
                 {menu.data.message.isPinned ? "Unpin Message" : "Pin Message"}
               </button>
 
               <button
                 onClick={() => handleForward(menu.data.message._id)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Share2 size={15} className="text-slate-400" />
+                <Share2 size={15} className="text-base-content/60" />
                 Forward Message
               </button>
 
               {menu.data.message.senderId === authUser._id && !menu.data.message.isDeleted && (
                 <>
-                  <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+                  <div className="h-px bg-base-200 my-1" />
                   <button
                     onClick={() => handleEdit(menu.data.message._id)}
-                    className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                    className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
                   >
-                    <Edit size={15} className="text-slate-400" />
+                    <Edit size={15} className="text-base-content/60" />
                     Edit Message
                   </button>
 
                   <button
                     onClick={() => handleDelete(menu.data.message._id)}
-                    className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 dark:text-red-400 transition-colors"
+                    className="w-full px-3 py-2 text-left hover:bg-red-50 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 transition-colors"
                   >
                     <Trash2 size={15} className="text-red-500" />
                     Delete Message
@@ -455,9 +455,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <>
               <button
                 onClick={() => handleOpenChat(menu.data.user)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <MessageSquare size={15} className="text-slate-400" />
+                <MessageSquare size={15} className="text-base-content/60" />
                 Open Direct Chat
               </button>
 
@@ -466,17 +466,17 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   navigate(`/u/${getUserHandle(menu.data.user).replace("@", "")}`);
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <User size={15} className="text-slate-400" />
+                <User size={15} className="text-base-content/60" />
                 View Profile Card
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={() => handleBlockUser(menu.data.user._id)}
-                className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 dark:text-red-400 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-red-50 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 transition-colors"
               >
                 <Slash size={15} className="text-red-500" />
                 Block & Mute User
@@ -489,35 +489,35 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <>
               <button
                 onClick={() => handleInputCut(menu.data.element)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Scissors size={15} className="text-slate-400" />
+                <Scissors size={15} className="text-base-content/60" />
                 Cut Selection
               </button>
 
               <button
                 onClick={() => handleInputCopy(menu.data.element)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <CopyIcon size={15} className="text-slate-400" />
+                <CopyIcon size={15} className="text-base-content/60" />
                 Copy
               </button>
 
               <button
                 onClick={() => handleInputPaste(menu.data.element)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Clipboard size={15} className="text-slate-400" />
+                <Clipboard size={15} className="text-base-content/60" />
                 Paste
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={() => handleInputClear(menu.data.element)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-750 dark:text-slate-300 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content transition-colors"
               >
-                <Eraser size={15} className="text-slate-400" />
+                <Eraser size={15} className="text-base-content/60" />
                 Clear All Text
               </button>
             </>
@@ -528,17 +528,17 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <>
               <button
                 onClick={() => handleImageLightbox(menu.data.src)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Maximize2 size={15} className="text-slate-400" />
+                <Maximize2 size={15} className="text-base-content/60" />
                 Open Lightbox
               </button>
 
               <button
                 onClick={() => handleCopy(menu.data.src)}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Copy size={15} className="text-slate-400" />
+                <Copy size={15} className="text-base-content/60" />
                 Copy Image URL
               </button>
 
@@ -547,10 +547,10 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 download={menu.data.alt || "download"}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
                 onClick={hideMenu}
               >
-                <Download size={15} className="text-slate-400" />
+                <Download size={15} className="text-base-content/60" />
                 Download Attachment
               </a>
             </>
@@ -564,7 +564,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   setTheme(BLINK_LIGHT);
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
                 <SunMoon size={15} className="text-amber-500" />
                 Set Light Mode
@@ -574,9 +574,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   setTheme(BLINK_DARK);
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <SunMoon size={15} className="text-blue-400" />
+                <SunMoon size={15} className="text-primary" />
                 Set Dark Mode
               </button>
               <button
@@ -584,13 +584,13 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   setTheme("system");
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <SunMoon size={15} className="text-slate-400" />
+                <SunMoon size={15} className="text-base-content/60" />
                 Sync with OS Theme
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={() => {
@@ -599,9 +599,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   toast.success(`Send on Enter: ${!sendOnEnter ? "Enabled" : "Disabled"}`);
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Send size={15} className="text-slate-400" />
+                <Send size={15} className="text-base-content/60" />
                 Toggle Send on Enter
               </button>
 
@@ -610,7 +610,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   navigate("/");
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
                 <MessageSquare size={15} className="text-primary" />
                 Back to DMs
@@ -626,9 +626,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("close-active-modal"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <X size={15} className="text-slate-400" />
+                <X size={15} className="text-base-content/60" />
                 Close Modal
               </button>
 
@@ -637,22 +637,22 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("submit-active-modal"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <CheckCircle2 size={15} className="text-emerald-500" />
+                <CheckCircle2 size={15} className="text-primary" />
                 Submit / Confirm
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={() => {
                   toast.success("Help and guidelines for dialog forms loaded.");
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Settings size={15} className="text-slate-400" />
+                <Settings size={15} className="text-base-content/60" />
                 Form Assistance
               </button>
             </>
@@ -666,9 +666,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("friends-tab-explore"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Globe size={15} className="text-blue-500" />
+                <Globe size={15} className="text-primary" />
                 Explore People
               </button>
 
@@ -677,9 +677,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("friends-tab-friends"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Users size={15} className="text-indigo-500" />
+                <Users size={15} className="text-primary" />
                 View Friends
               </button>
 
@@ -688,13 +688,13 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("friends-tab-requests"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Inbox size={15} className="text-violet-500" />
+                <Inbox size={15} className="text-primary" />
                 Friend Requests
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={() => {
@@ -704,9 +704,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   toast.success("Synchronized contacts list");
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <RefreshCw size={15} className="text-slate-400" />
+                <RefreshCw size={15} className="text-base-content/60" />
                 Refresh Connections
               </button>
             </>
@@ -720,9 +720,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("sidebar-tab-chats"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <MessageSquare size={15} className="text-blue-500" />
+                <MessageSquare size={15} className="text-primary" />
                 Direct Messages
               </button>
 
@@ -731,9 +731,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("sidebar-tab-users"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Users size={15} className="text-indigo-500" />
+                <Users size={15} className="text-primary" />
                 View Friends List
               </button>
 
@@ -742,22 +742,22 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   window.dispatchEvent(new CustomEvent("sidebar-tab-notifications"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Bell size={15} className="text-violet-500" />
+                <Bell size={15} className="text-primary" />
                 Notifications
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent("sidebar-create-server"));
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Plus size={15} className="text-emerald-500" />
+                <Plus size={15} className="text-primary" />
                 Create a Server
               </button>
 
@@ -766,7 +766,7 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   logout();
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 dark:text-red-400 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-red-50 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 transition-colors"
               >
                 <LogOut size={15} className="text-red-500" />
                 Log Out Account
@@ -783,9 +783,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     window.dispatchEvent(new CustomEvent("navbar-status-modal"));
                     hideMenu();
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                  className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
                 >
-                  <MessageCircle size={15} className="text-blue-500" />
+                  <MessageCircle size={15} className="text-primary" />
                   Update Status message
                 </button>
               )}
@@ -795,22 +795,22 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   navigate("/settings");
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Settings size={15} className="text-slate-400" />
+                <Settings size={15} className="text-base-content/60" />
                 Go to Settings
               </button>
 
               {authUser && (
                 <>
-                  <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+                  <div className="h-px bg-base-200 my-1" />
 
                   <button
                     onClick={() => {
                       logout();
                       hideMenu();
                     }}
-                    className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 dark:text-red-400 transition-colors"
+                    className="w-full px-3 py-2 text-left hover:bg-red-50 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-red-600 transition-colors"
                   >
                     <LogOut size={15} className="text-red-500" />
                     Log Out Account
@@ -825,9 +825,9 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <>
               <button
                 onClick={toggleTheme}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <SunMoon size={15} className="text-slate-400" />
+                <SunMoon size={15} className="text-base-content/60" />
                 Toggle Dark Mode ({theme})
               </button>
 
@@ -836,19 +836,19 @@ export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   navigate("/settings");
                   hideMenu();
                 }}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content/60 transition-colors"
               >
-                <Settings size={15} className="text-slate-400" />
+                <Settings size={15} className="text-base-content/60" />
                 App Preferences
               </button>
 
-              <div className="h-px bg-slate-100 dark:bg-slate-850 my-1" />
+              <div className="h-px bg-base-200 my-1" />
 
               <button
                 onClick={handleRefresh}
-                className="w-full px-3 py-2 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-slate-750 dark:text-slate-300 transition-colors"
+                className="w-full px-3 py-2 text-left hover:bg-base-200/80 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-base-content transition-colors"
               >
-                <RefreshCw size={15} className="text-slate-400" />
+                <RefreshCw size={15} className="text-base-content/60" />
                 Reload Application
               </button>
             </>

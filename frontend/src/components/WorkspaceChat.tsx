@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ChatThemePicker from "./ChatThemePicker";
+import Avatar from "./Avatar";
 
 // Date formatting helper
 const formatDateLabel = (dateStr) => {
@@ -179,8 +180,8 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
   if (!selectedWorkspace || !channel) {
     return (
-      <div className="flex-grow flex flex-col items-center justify-center bg-slate-950 text-slate-400">
-        <Loader className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+      <div className="flex-grow flex flex-col items-center justify-center bg-base-300 text-base-content/60">
+        <Loader className="w-8 h-8 animate-spin text-primary mb-2" />
         <span>Loading Group...</span>
       </div>
     );
@@ -326,16 +327,16 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             {/* Message Stream */}
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chat-bg-pattern scrollbar-thin">
               {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500 py-10">
-                  <div className="p-4 rounded-full bg-slate-900 border border-slate-800 mb-3">
+                <div className="h-full flex flex-col items-center justify-center text-base-content/60 py-10">
+                  <div className="p-4 rounded-full bg-base-200 border border-base-300 mb-3">
                     {channel.type === "announcements" ? (
-                      <Megaphone className="w-8 h-8 text-indigo-400" />
+                      <Megaphone className="w-8 h-8 text-primary" />
                     ) : (
-                      <Hash className="w-8 h-8 text-blue-400" />
+                      <Hash className="w-8 h-8 text-primary" />
                     )}
                   </div>
-                  <h4 className="font-bold text-slate-300">Welcome to #{channel.name}!</h4>
-                  <p className="text-xs text-slate-500 max-w-sm text-center mt-1">
+                  <h4 className="font-bold text-base-content">Welcome to #{channel.name}!</h4>
+                  <p className="text-xs text-base-content/60 max-w-sm text-center mt-1">
                     {channel.topic || "This is the start of this channel."}
                   </p>
                 </div>
@@ -349,23 +350,22 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                       <div key={msg._id} className="space-y-2">
                         {showDate && (
                           <div className="flex items-center justify-center my-6">
-                            <span className="px-3 py-1 rounded-full bg-slate-900/60 border border-slate-800 text-[10px] font-bold text-slate-400 tracking-wider">
+                            <span className="px-3 py-1 rounded-full bg-base-200/60 border border-base-300 text-[10px] font-bold text-base-content/60 tracking-wider">
                               {formatDateLabel(msg.createdAt)}
                             </span>
                           </div>
                         )}
 
                         <div className={`flex gap-3 items-start group ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
-                          <img
-                            src={msg.senderId?.profilePic || "/avatar.png"}
-                            alt={msg.senderId?.fullName || "User"}
-                            className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-800 shadow-md"
+                          <Avatar
+                            user={msg.senderId}
+                            className="w-10 h-10 ring-2 ring-base-300 shadow-md"
                           />
 
                           <div className={`flex flex-col max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}>
                             {/* Author Info */}
-                            <div className="flex items-center gap-1.5 px-1 mb-1 text-[11px] text-slate-400 font-semibold">
-                              <span className="font-bold text-slate-200">{msg.senderId?.fullName || "Unknown User"}</span>
+                            <div className="flex items-center gap-1.5 px-1 mb-1 text-[11px] text-base-content/60 font-semibold">
+                              <span className="font-bold text-base-content">{msg.senderId?.fullName || "Unknown User"}</span>
                               <span>•</span>
                               <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
@@ -374,21 +374,21 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                             <div 
                               className={`p-3.5 rounded-2xl border text-sm font-medium shadow-sm transition duration-200 leading-relaxed ${
                                 isOwn 
-                                  ? "bg-blue-600 border-blue-500 text-white rounded-tr-none" 
-                                  : "bg-slate-900 border-slate-800 text-slate-100 rounded-tl-none"
+                                  ? "bg-primary border-primary text-primary-content rounded-tr-none" 
+                                  : "bg-base-200 border-base-300 text-base-content rounded-tl-none"
                               }`}
                             >
                               {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
 
                               {/* Uploaded File preview inside chat */}
                               {msg.file && (
-                                <div className="mt-2.5 flex items-center gap-2.5 p-2 rounded-xl bg-slate-950/40 border border-slate-800/80">
-                                  <FileText className="w-8 h-8 text-blue-400" />
+                                <div className="mt-2.5 flex items-center gap-2.5 p-2 rounded-xl bg-base-300/40 border border-base-300/80">
+                                  <FileText className="w-8 h-8 text-primary" />
                                   <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-semibold text-slate-200 truncate max-w-[180px]">
+                                    <span className="text-xs font-semibold text-base-content truncate max-w-[180px]">
                                       {msg.file.name}
                                     </span>
-                                    <span className="text-[10px] text-slate-400">
+                                    <span className="text-[10px] text-base-content/60">
                                       {(msg.file.size / 1024 / 1024).toFixed(2)} MB
                                     </span>
                                   </div>
@@ -397,7 +397,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                                     download 
                                     target="_blank" 
                                     rel="noreferrer"
-                                    className="ml-auto p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                                    className="ml-auto p-1.5 rounded-lg bg-base-300 hover:bg-base-300 text-base-content transition"
                                   >
                                     <Download className="w-3.5 h-3.5" />
                                   </a>
@@ -406,7 +406,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                               
                               {/* Attached image preview */}
                               {msg.image && (
-                                <div className="mt-2.5 rounded-xl overflow-hidden border border-slate-800 max-w-xs">
+                                <div className="mt-2.5 rounded-xl overflow-hidden border border-base-300 max-w-xs">
                                   <img src={msg.image} alt="Attachment" className="w-full h-auto object-cover" />
                                 </div>
                               )}
@@ -423,8 +423,8 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                                     onClick={() => addChannelReaction(selectedChannelId, msg._id, emoji)}
                                     className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-semibold transition ${
                                       userReacted
-                                        ? "bg-blue-600/10 border-blue-500 text-blue-400"
-                                        : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-base-200 border-base-300 text-base-content/60 hover:border-base-300 hover:text-base-content"
                                     }`}
                                   >
                                     <span>{emoji}</span>
@@ -439,7 +439,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                                   <button
                                     key={em}
                                     onClick={() => addChannelReaction(selectedChannelId, msg._id, em)}
-                                    className="size-6 rounded-full bg-slate-900 border border-slate-850 hover:bg-slate-800 flex items-center justify-center text-xs transition duration-100"
+                                    className="size-6 rounded-full bg-base-200 border border-base-300 hover:bg-base-300 flex items-center justify-center text-xs transition duration-100"
                                   >
                                     {em}
                                   </button>
@@ -458,19 +458,19 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
             {/* Typing status bar */}
             {channelTypingUsers.length > 0 && (
-              <div className="px-4 py-1.5 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400 font-medium">
-                <span className="text-emerald-500 font-bold animate-pulse">
+              <div className="px-4 py-1.5 bg-base-300/60 border-t border-base-300 text-xs text-base-content/60 font-medium">
+                <span className="text-primary font-bold animate-pulse">
                   {getTypingUsersText()}
                 </span>
               </div>
             )}
 
             {/* Input Bar */}
-            <form onSubmit={handleSendMessage} className="p-3 bg-slate-900 border-t border-slate-800 flex flex-col gap-2.5 z-10">
+            <form onSubmit={handleSendMessage} className="p-3 bg-base-200 border-t border-base-300 flex flex-col gap-2.5 z-10">
               {/* Previews if any */}
               {imagePreview && (
-                <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800 w-fit">
-                  <div className="relative size-12 rounded-lg overflow-hidden border border-slate-750">
+                <div className="flex items-center gap-3 bg-base-300 p-2 rounded-xl border border-base-300 w-fit">
+                  <div className="relative size-12 rounded-lg overflow-hidden border border-base-300">
                     <img src={imagePreview} alt="Preview" className="object-cover w-full h-full" />
                     <button 
                       type="button" 
@@ -480,21 +480,21 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                       <X className="w-3 h-3" />
                     </button>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium truncate max-w-[150px]">{selectedImage?.name}</span>
+                  <span className="text-xs text-base-content/60 font-medium truncate max-w-[150px]">{selectedImage?.name}</span>
                 </div>
               )}
 
               {selectedFile && (
-                <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800 w-fit">
-                  <FileText className="w-8 h-8 text-blue-400" />
+                <div className="flex items-center gap-3 bg-base-300 p-2 rounded-xl border border-base-300 w-fit">
+                  <FileText className="w-8 h-8 text-primary" />
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-semibold text-slate-200 truncate max-w-[120px]">{selectedFile.name}</span>
-                    <span className="text-[10px] text-slate-500">{(selectedFile.size / 1024).toFixed(1)} KB</span>
+                    <span className="text-xs font-semibold text-base-content truncate max-w-[120px]">{selectedFile.name}</span>
+                    <span className="text-[10px] text-base-content/60">{(selectedFile.size / 1024).toFixed(1)} KB</span>
                   </div>
                   <button 
                     type="button" 
                     onClick={removeSelectedFile} 
-                    className="p-1 hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-200 transition"
+                    className="p-1 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-base-content transition"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -505,7 +505,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                 <button
                   type="button"
                   onClick={() => imageInputRef.current?.click()}
-                  className="size-10 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition focus:ring-2 focus:ring-blue-500"
+                  className="size-10 flex items-center justify-center rounded-xl bg-base-300 hover:bg-base-300 text-base-content/60 hover:text-base-content transition focus:ring-2 focus:ring-primary"
                   title="Attach Image"
                 >
                   <ImageIcon className="w-5 h-5" />
@@ -521,7 +521,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="size-10 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition focus:ring-2 focus:ring-blue-500"
+                  className="size-10 flex items-center justify-center rounded-xl bg-base-300 hover:bg-base-300 text-base-content/60 hover:text-base-content transition focus:ring-2 focus:ring-primary"
                   title="Attach File"
                 >
                   <Paperclip className="w-5 h-5" />
@@ -539,13 +539,13 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                   value={text}
                   maxLength={1024}
                   onChange={handleTextChange}
-                  className="flex-1 bg-slate-800 border border-slate-700 hover:border-slate-650 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-500 transition"
+                  className="flex-1 bg-base-300 border border-base-300 hover:border-base-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary text-sm rounded-xl px-4 py-2.5 text-base-content placeholder:text-base-content/40 transition"
                 />
 
                 <button
                   type="submit"
                   disabled={!text.trim() && !selectedImage && !selectedFile}
-                  className="size-10 flex items-center justify-center rounded-xl bg-blue-650 hover:bg-blue-700 disabled:bg-slate-800 text-white disabled:text-slate-500 transition shadow-lg focus:ring-2 focus:ring-blue-500"
+                  className="size-10 flex items-center justify-center rounded-xl bg-primary hover:bg-primary disabled:bg-base-300 text-primary-content disabled:text-base-content/60 transition shadow-lg focus:ring-2 focus:ring-primary"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -556,24 +556,24 @@ const WorkspaceChat = ({ onBurgerClick }) => {
       
       case "polls":
         return (
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-950">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-base-300">
             {/* Poll Dashboard View */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
-              <div className="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
+              <div className="flex items-center justify-between mb-4 border-b border-base-300/80 pb-3">
                 <div className="flex items-center gap-2">
-                  <BarChart2 className="w-5 h-5 text-indigo-400" />
-                  <h3 className="font-bold text-slate-200 text-[15px]">Active Server Polls</h3>
+                  <BarChart2 className="w-5 h-5 text-primary" />
+                  <h3 className="font-bold text-base-content text-[15px]">Active Server Polls</h3>
                 </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-900 px-2 py-0.5 rounded border border-slate-850">
+                <span className="text-[10px] font-bold text-base-content/60 uppercase tracking-wider bg-base-200 px-2 py-0.5 rounded border border-base-300">
                   {polls.length} Polls Launched
                 </span>
               </div>
 
               {polls.length === 0 ? (
-                <div className="h-[250px] flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
-                  <HelpCircle className="w-8 h-8 text-slate-600 mb-2" />
+                <div className="h-[250px] flex flex-col items-center justify-center text-base-content/60 border border-dashed border-base-300 rounded-2xl">
+                  <HelpCircle className="w-8 h-8 text-base-content/60 mb-2" />
                   <span className="text-sm font-semibold">No polls launched yet.</span>
-                  <span className="text-[11px] text-slate-600 mt-0.5">Use the creator panel to launch the first team poll.</span>
+                  <span className="text-[11px] text-base-content/60 mt-0.5">Use the creator panel to launch the first team poll.</span>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -584,29 +584,28 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                     return (
                       <div 
                         key={poll._id} 
-                        className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 relative overflow-hidden"
+                        className="bg-base-200/60 border border-base-300 rounded-2xl p-5 shadow-sm space-y-4 relative overflow-hidden"
                       >
                         {/* Creator info */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <img 
-                              src={poll.creatorId?.profilePic || "/avatar.png"} 
-                              alt="creator" 
-                              className="size-7 rounded-full object-cover ring-1 ring-slate-800"
+                            <Avatar
+                              user={poll.creatorId}
+                              className="size-7 ring-1 ring-base-300"
                             />
                             <div className="flex flex-col">
-                              <span className="text-[11px] font-bold text-slate-300 leading-none">{poll.creatorId?.fullName || "Workspace Admin"}</span>
-                              <span className="text-[9px] text-slate-500 mt-0.5">{new Date(poll.createdAt).toLocaleDateString()}</span>
+                              <span className="text-[11px] font-bold text-base-content leading-none">{poll.creatorId?.fullName || "Workspace Admin"}</span>
+                              <span className="text-[9px] text-base-content/60 mt-0.5">{new Date(poll.createdAt).toLocaleDateString()}</span>
                             </div>
                           </div>
                           
-                          <span className="text-[10px] font-bold text-slate-400 px-2 py-0.5 rounded-full bg-slate-950 border border-slate-850/80">
+                          <span className="text-[10px] font-bold text-base-content/60 px-2 py-0.5 rounded-full bg-base-300 border border-base-300/80">
                             {totalVotes} {totalVotes === 1 ? "Vote" : "Votes"}
                           </span>
                         </div>
 
                         {/* Question */}
-                        <h4 className="font-bold text-slate-200 text-sm leading-snug">
+                        <h4 className="font-bold text-base-content text-sm leading-snug">
                           {poll.question}
                         </h4>
 
@@ -621,16 +620,16 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                               <button
                                 key={opt._id}
                                 onClick={() => voteInPoll(selectedWorkspace._id, selectedChannelId, poll._id, opt._id)}
-                                className={`w-full text-left rounded-xl p-3 border relative overflow-hidden transition group focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                                className={`w-full text-left rounded-xl p-3 border relative overflow-hidden transition group focus:outline-none focus:ring-2 focus:ring-primary ${
                                   hasVoted 
-                                    ? "bg-indigo-600/5 border-indigo-500/80 text-slate-100"
-                                    : "bg-slate-950/40 border-slate-800 text-slate-300 hover:border-slate-700"
+                                    ? "bg-primary/5 border-primary/80 text-base-content"
+                                    : "bg-base-300/40 border-base-300 text-base-content hover:border-base-300"
                                 }`}
                               >
                                 {/* Percentage fill layer */}
                                 <div 
                                   className={`absolute left-0 top-0 bottom-0 transition-all duration-500 rounded-r-md ${
-                                    hasVoted ? "bg-indigo-500/10" : "bg-slate-800/40"
+                                    hasVoted ? "bg-primary/10" : "bg-base-300/40"
                                   }`}
                                   style={{ width: `${percentage}%` }}
                                 />
@@ -640,16 +639,16 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                                   <div className="flex items-center gap-2 min-w-0 pr-4">
                                     <div className={`size-3.5 rounded-full border flex items-center justify-center transition-colors ${
                                       hasVoted 
-                                        ? "border-indigo-400 bg-indigo-500 text-white" 
-                                        : "border-slate-700 bg-slate-900 group-hover:border-slate-500"
+                                        ? "border-primary bg-primary text-primary-content" 
+                                        : "border-base-300 bg-base-200 group-hover:border-base-300"
                                     }`}>
-                                      {hasVoted && <div className="size-1.5 bg-white rounded-full" />}
+                                      {hasVoted && <div className="size-1.5 bg-base-100 rounded-full" />}
                                     </div>
                                     <span className="truncate">{opt.text}</span>
                                   </div>
                                   <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className={hasVoted ? "text-indigo-400" : "text-slate-400"}>{percentage}%</span>
-                                    <span className="text-[10px] text-slate-500">({optVotes})</span>
+                                    <span className={hasVoted ? "text-primary" : "text-base-content/60"}>{percentage}%</span>
+                                    <span className="text-[10px] text-base-content/60">({optVotes})</span>
                                   </div>
                                 </div>
                               </button>
@@ -664,32 +663,32 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             </div>
 
             {/* Poll Creator Sidebar (Desktop right, mobile stacked) */}
-            <div className="w-full lg:w-80 bg-slate-900/50 border-t lg:border-t-0 lg:border-l border-slate-850 p-5 space-y-4 flex-shrink-0">
+            <div className="w-full lg:w-80 bg-base-200/50 border-t lg:border-t-0 lg:border-l border-base-300 p-5 space-y-4 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                <h3 className="font-bold text-slate-200 text-sm">Launch Team Poll</h3>
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-base-content text-sm">Launch Team Poll</h3>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-base-content/60 leading-relaxed">
                 Create real-time surveys to gather immediate feedback on layouts, code specifications, or meetings.
               </p>
 
               <form onSubmit={handleLaunchPoll} className="space-y-4">
                 {/* Question */}
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Poll Question</label>
+                  <label className="block text-[10px] font-bold text-base-content/60 uppercase tracking-wider">Poll Question</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Which button layout is better?"
                     value={pollQuestion}
                     onChange={(e) => setPollQuestion(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 hover:border-slate-650 focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-550 focus:outline-none focus:ring-2 focus:ring-blue-550/20 transition"
+                    className="w-full bg-base-300 border border-base-300 hover:border-base-300 focus:border-primary rounded-xl px-3 py-2 text-xs text-base-content placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary transition"
                   />
                 </div>
 
                 {/* Option Fields */}
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider">Poll Options</label>
+                  <label className="block text-[10px] font-bold text-base-content/60 uppercase tracking-wider">Poll Options</label>
                   {pollOptions.map((opt, i) => (
                     <div key={i} className="flex gap-2 items-center">
                       <input
@@ -702,13 +701,13 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                           updated[i] = e.target.value;
                           setPollOptions(updated);
                         }}
-                        className="flex-grow bg-slate-800 border border-slate-700 hover:border-slate-650 focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-550 focus:outline-none focus:ring-2 focus:ring-blue-550/20 transition"
+                        className="flex-grow bg-base-300 border border-base-300 hover:border-base-300 focus:border-primary rounded-xl px-3 py-2 text-xs text-base-content placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary transition"
                       />
                       {pollOptions.length > 2 && (
                         <button
                           type="button"
                           onClick={() => handleRemovePollOptionInput(i)}
-                          className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition"
+                          className="p-2 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-red-400 transition"
                           title="Remove option"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -719,7 +718,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                   <button
                     type="button"
                     onClick={handleAddPollOptionInput}
-                    className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition focus:outline-none"
+                    className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary transition focus:outline-none"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add Option</span>
@@ -728,7 +727,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/10 transition active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full py-2.5 bg-primary hover:bg-primary text-primary-content text-xs font-bold rounded-xl shadow-lg shadow-primary/10 transition active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   Create & Launch Poll
                 </button>
@@ -740,8 +739,8 @@ const WorkspaceChat = ({ onBurgerClick }) => {
       case "resources":
         return (
           <div 
-            className={`flex-grow flex flex-col p-5 overflow-hidden bg-slate-950 transition-colors ${
-              isDragging ? "bg-slate-900 border-2 border-dashed border-indigo-500/80" : ""
+            className={`flex-grow flex flex-col p-5 overflow-hidden bg-base-300 transition-colors ${
+              isDragging ? "bg-base-200 border-2 border-dashed border-primary/80" : ""
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -749,29 +748,29 @@ const WorkspaceChat = ({ onBurgerClick }) => {
           >
             {/* Drag & Drop File Upload Overlay */}
             {isDragging && (
-              <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
-                <div className="p-5 rounded-full bg-indigo-600/10 border border-indigo-500 animate-bounce mb-3">
-                  <Paperclip className="w-10 h-10 text-indigo-400" />
+              <div className="absolute inset-0 bg-base-300/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
+                <div className="p-5 rounded-full bg-primary/10 border border-primary animate-bounce mb-3">
+                  <Paperclip className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-200">Drop your file here</h3>
-                <p className="text-xs text-slate-500 mt-1">Upload automatically to the workspace server stream</p>
+                <h3 className="text-lg font-bold text-base-content">Drop your file here</h3>
+                <p className="text-xs text-base-content/60 mt-1">Upload automatically to the workspace server stream</p>
               </div>
             )}
 
             {/* Header info */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-850 pb-4 mb-5 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-base-300 pb-4 mb-5 flex-shrink-0">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <FolderOpen className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-bold text-slate-200 text-[15px]">Shared Resources & Documents</h3>
+                  <FolderOpen className="w-5 h-5 text-primary" />
+                  <h3 className="font-bold text-base-content text-[15px]">Shared Resources & Documents</h3>
                 </div>
-                <p className="text-[11px] text-slate-500">Drag & drop files anywhere in the panel to instantly upload.</p>
+                <p className="text-[11px] text-base-content/60">Drag & drop files anywhere in the panel to instantly upload.</p>
               </div>
 
               {/* Upload trigger button */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/10 transition active:scale-[0.98] flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="px-3.5 py-2 bg-primary hover:bg-primary text-primary-content text-xs font-bold rounded-xl shadow-lg shadow-primary/10 transition active:scale-[0.98] flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <Plus className="w-4 h-4" />
                 <span>Upload Document</span>
@@ -792,10 +791,10 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             {/* Main File Stream Gallery Grid */}
             <div className="flex-grow overflow-y-auto scrollbar-thin">
               {resources.length === 0 ? (
-                <div className="h-[300px] flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
-                  <FolderOpen className="w-8 h-8 text-slate-700 mb-2" />
+                <div className="h-[300px] flex flex-col items-center justify-center text-base-content/60 border border-dashed border-base-300 rounded-2xl">
+                  <FolderOpen className="w-8 h-8 text-base-content/60 mb-2" />
                   <span className="text-sm font-semibold">No resource documents shared yet.</span>
-                  <span className="text-[11px] text-slate-600 mt-0.5">Drag files in or click Upload to publish shared sheets.</span>
+                  <span className="text-[11px] text-base-content/60 mt-0.5">Drag files in or click Upload to publish shared sheets.</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
@@ -807,40 +806,39 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                     return (
                       <div 
                         key={res._id} 
-                        className="bg-slate-900 border border-slate-850 hover:border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-sm transition hover:-translate-y-0.5 duration-200 group"
+                        className="bg-base-200 border border-base-300 hover:border-base-300 rounded-2xl p-4 flex flex-col justify-between shadow-sm transition hover:-translate-y-0.5 duration-200 group"
                       >
                         <div className="flex items-start gap-3">
                           <div className={`p-2.5 rounded-xl flex-shrink-0 ${
                             isPdf ? "bg-red-500/10 text-red-400" :
-                            isImg ? "bg-blue-500/10 text-blue-400" :
-                            isZip ? "bg-yellow-500/10 text-yellow-400" : "bg-slate-800 text-slate-400"
+                            isImg ? "bg-primary/10 text-primary" :
+                            isZip ? "bg-yellow-500/10 text-yellow-400" : "bg-base-300 text-base-content/60"
                           }`}>
                             <FileText className="w-6 h-6" />
                           </div>
                           
                           <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-slate-200 text-xs truncate group-hover:text-blue-400 transition" title={res.name}>
+                            <h4 className="font-bold text-base-content text-xs truncate group-hover:text-primary transition" title={res.name}>
                               {res.name}
                             </h4>
-                            <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                            <span className="text-[10px] text-base-content/60 font-semibold block mt-0.5">
                               {(res.size / 1024 / 1024).toFixed(2)} MB • {res.type ? res.type.split("/")[1]?.toUpperCase() : "DOC"}
                             </span>
                           </div>
                         </div>
 
                         {/* Uploader Card & Action buttons */}
-                        <div className="flex items-center justify-between border-t border-slate-850 mt-4 pt-3 flex-shrink-0">
+                        <div className="flex items-center justify-between border-t border-base-300 mt-4 pt-3 flex-shrink-0">
                           <div className="flex items-center gap-2">
-                            <img 
-                              src={res.uploadedBy?.profilePic || "/avatar.png"} 
-                              alt="avatar" 
-                              className="w-6 h-6 rounded-full object-cover ring-1 ring-slate-850"
+                            <Avatar
+                              user={res.uploadedBy}
+                              className="w-6 h-6 ring-1 ring-base-300"
                             />
                             <div className="flex flex-col min-w-0">
-                              <span className="text-[10px] font-bold text-slate-350 truncate max-w-[80px]">
+                              <span className="text-[10px] font-bold text-base-content truncate max-w-[80px]">
                                 {res.uploadedBy?.fullName || "Admin"}
                               </span>
-                              <span className="text-[8px] text-slate-500">
+                              <span className="text-[8px] text-base-content/60">
                                 {new Date(res.createdAt).toLocaleDateString()}
                               </span>
                             </div>
@@ -851,7 +849,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                             download 
                             target="_blank" 
                             rel="noreferrer"
-                            className="p-1.5 rounded-xl bg-slate-850 hover:bg-indigo-650 hover:text-white text-slate-400 transition flex items-center justify-center"
+                            className="p-1.5 rounded-xl bg-base-300 hover:bg-primary hover:text-primary-content text-base-content/60 transition flex items-center justify-center"
                             title="Download document"
                           >
                             <Download className="w-3.5 h-3.5" />
@@ -868,28 +866,28 @@ const WorkspaceChat = ({ onBurgerClick }) => {
       
       case "voice":
         return (
-          <div className="flex-grow flex flex-col items-center justify-center p-5 bg-slate-950 text-slate-400 relative overflow-hidden">
+          <div className="flex-grow flex flex-col items-center justify-center p-5 bg-base-300 text-base-content/60 relative overflow-hidden">
             {/* Audio wave grid bg animation */}
             <div className="absolute inset-0 opacity-[0.03] flex items-center justify-center pointer-events-none">
-              <div className="size-[500px] border border-blue-500 rounded-full animate-ping duration-3000" />
+              <div className="size-[500px] border border-primary rounded-full animate-ping duration-3000" />
             </div>
 
-            <div className="max-w-md w-full bg-slate-900 border border-slate-850 rounded-3xl p-6 text-center space-y-6 shadow-2xl relative z-10">
-              <div className="mx-auto size-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="max-w-md w-full bg-base-200 border border-base-300 rounded-3xl p-6 text-center space-y-6 shadow-2xl relative z-10">
+              <div className="mx-auto size-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
                 <Volume2 className="w-8 h-8 animate-pulse" />
               </div>
               
               <div className="space-y-1">
-                <h3 className="font-bold text-slate-200 text-lg">Voice Room: #{channel.name}</h3>
-                <p className="text-xs text-slate-500">Low-latency, encrypted peer communication server.</p>
+                <h3 className="font-bold text-base-content text-lg">Voice Room: #{channel.name}</h3>
+                <p className="text-xs text-base-content/60">Low-latency, encrypted peer communication server.</p>
               </div>
 
               {/* Members in Voice Room */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-base-content/60 px-1">
                   <span>Participants</span>
                   <span className="flex items-center gap-1">
-                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="size-1.5 rounded-full bg-primary animate-pulse" />
                     {inVoiceRoom ? (selectedWorkspace.members?.length || 1) : 0} Active
                   </span>
                 </div>
@@ -898,22 +896,21 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                   {inVoiceRoom ? (
                     <>
                       {/* Current User */}
-                      <div className={`p-3 rounded-2xl border flex flex-col items-center gap-2 bg-slate-950/40 transition-all ${
-                        !isMuted && Math.random() > 0.4 ? "border-emerald-500/50 shadow-md shadow-emerald-500/5" : "border-slate-850"
+                      <div className={`p-3 rounded-2xl border flex flex-col items-center gap-2 bg-base-300/40 transition-all ${
+                        !isMuted && Math.random() > 0.4 ? "border-primary/50 shadow-md shadow-primary/10" : "border-base-300"
                       }`}>
                         <div className="relative">
-                          <img 
-                            src={authUser.profilePic || "/avatar.png"} 
-                            alt="you" 
-                            className="size-10 rounded-full object-cover border-2 border-indigo-500"
+                          <Avatar
+                            user={authUser}
+                            className="size-10 border-2 border-primary"
                           />
                           {!isMuted && Math.random() > 0.4 && (
-                            <div className="absolute -inset-0.5 rounded-full border-2 border-emerald-400 animate-ping opacity-75" />
+                            <div className="absolute -inset-0.5 rounded-full border-2 border-primary animate-ping opacity-75" />
                           )}
                         </div>
-                        <span className="text-xs font-bold text-slate-200 truncate max-w-[80px]">You</span>
-                        <div className="flex items-center gap-1.5 text-[9px] text-slate-500 uppercase tracking-wide">
-                          {isMuted ? <MicOff className="w-3 h-3 text-red-400" /> : <Mic className="w-3 h-3 text-emerald-400" />}
+                        <span className="text-xs font-bold text-base-content truncate max-w-[80px]">You</span>
+                        <div className="flex items-center gap-1.5 text-[9px] text-base-content/60 uppercase tracking-wide">
+                          {isMuted ? <MicOff className="w-3 h-3 text-red-400" /> : <Mic className="w-3 h-3 text-primary" />}
                           <span>{isMuted ? "Muted" : "Speaking"}</span>
                         </div>
                       </div>
@@ -924,23 +921,22 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                         return (
                           <div 
                             key={member._id}
-                            className={`p-3 rounded-2xl border flex flex-col items-center gap-2 bg-slate-950/40 transition-all ${
-                              isSpeaking ? "border-emerald-500/50 shadow-md shadow-emerald-500/5" : "border-slate-850"
+                            className={`p-3 rounded-2xl border flex flex-col items-center gap-2 bg-base-300/40 transition-all ${
+                              isSpeaking ? "border-primary/50 shadow-md shadow-primary/10" : "border-base-300"
                             }`}
                           >
                             <div className="relative">
-                              <img 
-                                src={member.profilePic || "/avatar.png"} 
-                                alt={member.fullName} 
-                                className="size-10 rounded-full object-cover"
+                              <Avatar
+                                user={member}
+                                className="size-10"
                               />
                               {isSpeaking && (
-                                <div className="absolute -inset-0.5 rounded-full border-2 border-emerald-400 animate-ping opacity-75" />
+                                <div className="absolute -inset-0.5 rounded-full border-2 border-primary animate-ping opacity-75" />
                               )}
                             </div>
-                            <span className="text-xs font-bold text-slate-200 truncate max-w-[80px]">{member.fullName}</span>
-                            <div className="flex items-center gap-1.5 text-[9px] text-slate-500 uppercase tracking-wide">
-                              <Mic className={`w-3 h-3 ${isSpeaking ? "text-emerald-400" : "text-slate-655"}`} />
+                            <span className="text-xs font-bold text-base-content truncate max-w-[80px]">{member.fullName}</span>
+                            <div className="flex items-center gap-1.5 text-[9px] text-base-content/60 uppercase tracking-wide">
+                              <Mic className={`w-3 h-3 ${isSpeaking ? "text-primary" : "text-base-content/60"}`} />
                               <span>{isSpeaking ? "Speaking" : "Quiet"}</span>
                             </div>
                           </div>
@@ -948,7 +944,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                       })}
                     </>
                   ) : (
-                    <div className="col-span-2 py-8 text-center text-xs text-slate-600 font-semibold italic">
+                    <div className="col-span-2 py-8 text-center text-xs text-base-content/60 font-semibold italic">
                       Join voice room to connect.
                     </div>
                   )}
@@ -961,10 +957,10 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                   <>
                     <button
                       onClick={() => setIsMuted(!isMuted)}
-                      className={`size-12 rounded-2xl flex items-center justify-center transition border active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/25 ${
+                      className={`size-12 rounded-2xl flex items-center justify-center transition border active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary ${
                         isMuted 
                           ? "bg-red-500/10 border-red-500 text-red-400 hover:bg-red-500/20" 
-                          : "bg-slate-800 border-slate-750 text-slate-350 hover:bg-slate-700"
+                          : "bg-base-300 border-base-300 text-base-content hover:bg-base-300"
                       }`}
                       title={isMuted ? "Unmute Mic" : "Mute Mic"}
                     >
@@ -985,7 +981,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                       setInVoiceRoom(true);
                       toast.success("Joined low-latency voice room.");
                     }}
-                    className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-650/20 border border-indigo-500 transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="px-8 py-3 rounded-2xl bg-primary hover:bg-primary text-primary-content font-bold text-xs shadow-lg shadow-primary/10 border border-primary transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     Join Voice Room
                   </button>
@@ -997,7 +993,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
       default:
         return (
-          <div className="flex-1 flex items-center justify-center bg-slate-950 text-slate-500">
+          <div className="flex-1 flex items-center justify-center bg-base-300 text-base-content/60">
             Channel layout not found.
           </div>
         );
@@ -1012,35 +1008,35 @@ const WorkspaceChat = ({ onBurgerClick }) => {
       {/* Main Channel Layout */}
       <div className="flex-grow flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="h-16 px-4 border-b border-slate-850 bg-slate-900 flex items-center justify-between flex-shrink-0 z-20">
+        <div className="h-16 px-4 border-b border-base-300 bg-base-200 flex items-center justify-between flex-shrink-0 z-20">
           <div className="flex items-center gap-2">
             {/* Mobile Burger Menu Button */}
             <button
               onClick={onBurgerClick}
-              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+              className="lg:hidden p-2 rounded-xl text-base-content/60 hover:text-base-content hover:bg-base-300 transition"
               title="Workspace Menu"
             >
               <Users className="w-5 h-5" />
             </button>
-            <div className="flex items-center text-slate-100 font-bold text-sm">
+            <div className="flex items-center text-base-content font-bold text-sm">
               {channel.type === "announcements" ? (
-                <Megaphone className="w-4 h-4 text-indigo-400 mr-1.5" />
+                <Megaphone className="w-4 h-4 text-primary mr-1.5" />
               ) : channel.type === "polls" ? (
-                <BarChart2 className="w-4 h-4 text-indigo-400 mr-1.5" />
+                <BarChart2 className="w-4 h-4 text-primary mr-1.5" />
               ) : channel.type === "resources" ? (
-                <FolderOpen className="w-4 h-4 text-emerald-400 mr-1.5" />
+                <FolderOpen className="w-4 h-4 text-primary mr-1.5" />
               ) : channel.type === "voice" ? (
-                <Volume2 className="w-4 h-4 text-indigo-400 mr-1.5" />
+                <Volume2 className="w-4 h-4 text-primary mr-1.5" />
               ) : (
-                <Hash className="w-4 h-4 text-blue-400 mr-1.5" />
+                <Hash className="w-4 h-4 text-primary mr-1.5" />
               )}
               <span>{channel.name}</span>
             </div>
             
             {channel.topic && (
               <>
-                <span className="hidden sm:inline text-slate-600">|</span>
-                <span className="hidden sm:inline text-xs text-slate-450 truncate max-w-[280px]">
+                <span className="hidden sm:inline text-base-content/60">|</span>
+                <span className="hidden sm:inline text-xs text-base-content/60 truncate max-w-[280px]">
                   {channel.topic}
                 </span>
               </>
@@ -1051,7 +1047,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             {/* Channel Theme Button */}
             <button
               onClick={() => setShowThemePicker(true)}
-              className="size-9 rounded-xl flex items-center justify-center transition text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent"
+              className="size-9 rounded-xl flex items-center justify-center transition text-base-content/60 hover:text-base-content hover:bg-base-300 border border-transparent"
               title="Channel theme"
             >
               <Palette className="w-4 h-4" />
@@ -1059,10 +1055,10 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             {/* AI Assistant Toggle Button */}
             <button
               onClick={() => setShowAiDrawer(!showAiDrawer)}
-              className={`size-9 rounded-xl flex items-center justify-center transition focus:ring-2 focus:ring-blue-500 ${
+              className={`size-9 rounded-xl flex items-center justify-center transition focus:ring-2 focus:ring-primary ${
                 showAiDrawer
-                  ? "bg-blue-600/10 text-blue-400 border border-blue-550"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent"
+                  ? "bg-primary/10 text-primary border border-primary"
+                  : "text-base-content/60 hover:text-base-content hover:bg-base-300 border border-transparent"
               }`}
               title="Toggle Workspace AI Coach"
             >
@@ -1077,15 +1073,15 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
       {/* Panel 4: AI Context Sidebar Drawer */}
       {showAiDrawer && (
-        <aside className="w-80 h-full bg-slate-900 border-l border-slate-850 flex flex-col z-35 flex-shrink-0 animate-in slide-in-from-right duration-200">
-          <div className="h-16 px-4 border-b border-slate-850 bg-slate-900/60 flex items-center justify-between">
+        <aside className="w-80 h-full bg-base-200 border-l border-base-300 flex flex-col z-35 flex-shrink-0 animate-in slide-in-from-right duration-200">
+          <div className="h-16 px-4 border-b border-base-300 bg-base-200/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-blue-400 animate-pulse" />
-              <span className="font-bold text-slate-200 text-xs uppercase tracking-wider">Workspace AI Copilot</span>
+              <Brain className="w-4 h-4 text-primary animate-pulse" />
+              <span className="font-bold text-base-content text-xs uppercase tracking-wider">Workspace AI Copilot</span>
             </div>
             <button 
               onClick={() => setShowAiDrawer(false)} 
-              className="p-1 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-300 transition"
+              className="p-1 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-base-content transition"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1094,12 +1090,12 @@ const WorkspaceChat = ({ onBurgerClick }) => {
           {/* AI Stream */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
             {/* Insights panel widget */}
-            <div className="p-3.5 rounded-2xl bg-indigo-650/5 border border-indigo-500/10 space-y-2">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+            <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/10 space-y-2">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>Live Channel Insights</span>
               </h4>
-              <div className="space-y-1.5 text-xs text-slate-400 leading-relaxed font-semibold">
+              <div className="space-y-1.5 text-xs text-base-content/60 leading-relaxed font-semibold">
                 <p>• Current discussion focus: **dark mode UI parameters**.</p>
                 <p>• Sentiment score: **89% positive** (collaborative feedback).</p>
                 <p>• Shared assets: **1 Spec sheet** discovered in files.</p>
@@ -1110,13 +1106,13 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             <div className="space-y-3 pt-2">
               {aiConversation.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
-                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wide mb-1">
+                  <span className="text-[8px] font-bold text-base-content/60 uppercase tracking-wide mb-1">
                     {msg.sender === "user" ? "You" : "Blink AI"}
                   </span>
                   <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed border ${
                     msg.sender === "user" 
-                      ? "bg-slate-850 border-slate-750 text-slate-200 rounded-tr-none" 
-                      : "bg-indigo-600/10 border-indigo-500/10 text-slate-300 rounded-tl-none"
+                      ? "bg-base-300 border-base-300 text-base-content rounded-tr-none" 
+                      : "bg-primary/10 border-primary/10 text-base-content rounded-tl-none"
                   }`}>
                     <p className="whitespace-pre-wrap">{msg.text}</p>
                   </div>
@@ -1126,17 +1122,17 @@ const WorkspaceChat = ({ onBurgerClick }) => {
           </div>
 
           {/* Ask AI input footer */}
-          <form onSubmit={handleSendAiQuery} className="p-3 bg-slate-900 border-t border-slate-850 flex items-center gap-2">
+          <form onSubmit={handleSendAiQuery} className="p-3 bg-base-200 border-t border-base-300 flex items-center gap-2">
             <input
               type="text"
               placeholder="Ask AI about this server..."
               value={aiQuery}
               onChange={(e) => setAiQuery(e.target.value)}
-              className="flex-grow bg-slate-800 border border-slate-700 hover:border-slate-650 focus:border-blue-500 text-xs rounded-xl px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition"
+              className="flex-grow bg-base-300 border border-base-300 hover:border-base-300 focus:border-primary text-xs rounded-xl px-3 py-2 text-base-content placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary transition"
             />
             <button
               type="submit"
-              className="p-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95"
+              className="p-2 rounded-xl bg-primary hover:bg-primary text-primary-content transition active:scale-95"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

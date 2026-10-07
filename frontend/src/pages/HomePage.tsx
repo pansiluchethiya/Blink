@@ -29,7 +29,7 @@ const HomePage = () => {
   }, [selectedUser, selectedWorkspace, selectedChannelId]);
 
   return (
-    <div className="h-[100dvh] bg-slate-50 dark:bg-slate-900 flex flex-col overflow-hidden transition-colors duration-200">
+    <div className="h-[100dvh] bg-base-200 flex flex-col overflow-hidden">
       
       {/* 3-Section Layout */}
       <div className={`flex flex-grow h-full overflow-hidden w-full relative ${(!selectedUser && !selectedWorkspace) ? "pt-16 lg:pt-0" : ""}`}>
@@ -42,10 +42,10 @@ const HomePage = () => {
           className={`
             h-full flex-shrink-0 flex flex-col
             ${(selectedUser || selectedWorkspace) ? "hidden lg:flex" : "flex w-full"}
-            lg:w-[320px] border-r border-slate-200 dark:border-slate-800
+            lg:w-[320px] border-r border-base-300
           `}
         >
-          <div className="flex-grow min-h-0 bg-white dark:bg-slate-800 transition-colors">
+          <div className="flex-grow min-h-0 bg-base-100">
             {selectedWorkspace ? (
               <WorkspaceSidebar />
             ) : (
@@ -65,11 +65,11 @@ const HomePage = () => {
 
           {/* Sticky Mobile Bottom Navigation Bar (Hidden when chat is actively open) */}
           {(!selectedUser && !selectedWorkspace) && (
-            <nav className="lg:hidden border-t border-slate-150 dark:border-slate-800 bg-white/95 dark:bg-slate-850/95 backdrop-blur-md px-6 py-2.5 flex items-center justify-between z-30 select-none transition-colors pb-safe">
+            <nav className="lg:hidden border-t border-base-300 bg-base-100/95 backdrop-blur-md px-6 py-2.5 flex items-center justify-between z-30 select-none pb-safe">
               <button 
                 onClick={() => setActiveTab("chats")}
                 className={`flex flex-col items-center gap-1 transition-all ${
-                  activeTab === "chats" ? "text-blue-500 scale-105" : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-350"
+                  activeTab === "chats" ? "text-primary scale-105" : "text-base-content/60 hover:text-base-content"
                 }`}
               >
                 <MessageSquare size={19} className={activeTab === "chats" ? "fill-current" : ""} />
@@ -79,7 +79,7 @@ const HomePage = () => {
               <button 
                 onClick={() => setActiveTab("users")}
                 className={`flex flex-col items-center gap-1 transition-all ${
-                  activeTab === "users" ? "text-blue-500 scale-105" : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-355"
+                  activeTab === "users" ? "text-primary scale-105" : "text-base-content/60 hover:text-base-content"
                 }`}
               >
                 <Users size={19} className={activeTab === "users" ? "fill-current" : ""} />
@@ -89,7 +89,7 @@ const HomePage = () => {
               <button
                 onClick={() => setActiveTab("status")}
                 className={`flex flex-col items-center gap-1 transition-all ${
-                  activeTab === "status" ? "text-blue-500 scale-105" : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-355"
+                  activeTab === "status" ? "text-primary scale-105" : "text-base-content/60 hover:text-base-content"
                 }`}
               >
                 <Disc size={19} className={activeTab === "status" ? "fill-current animate-spin-slow" : ""} />
@@ -98,7 +98,7 @@ const HomePage = () => {
 
               <Link 
                 to="/settings"
-                className="flex flex-col items-center gap-1 transition-all text-slate-400 hover:text-slate-500 dark:hover:text-slate-355"
+                className="flex flex-col items-center gap-1 transition-all text-base-content/60 hover:text-base-content"
               >
                 <Settings size={19} />
                 <span className="text-[10px] font-bold">Settings</span>
@@ -130,17 +130,17 @@ const HomePage = () => {
         <div className="fixed inset-0 z-50 flex lg:hidden">
           {/* Backdrop Blur Overlay */}
           <div 
-            className="fixed inset-0 bg-slate-950/65 backdrop-blur-sm transition-opacity duration-200"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
             onClick={() => setIsMobileDrawerOpen(false)}
           />
           {/* Drawer Content */}
-          <div className="relative flex h-full max-w-[320px] w-[80vw] bg-slate-900 shadow-2xl border-r border-slate-800 animate-in slide-in-from-left duration-200 z-10">
+          <div className="relative flex h-full max-w-[320px] w-[80vw] bg-base-100 shadow-2xl border-r border-base-300 animate-in slide-in-from-left duration-200 z-10">
             <SidebarRail activeTab={activeTab} setActiveTab={setActiveTab} forceShow={true} />
             <div className="flex-1 min-w-0 h-full flex flex-col">
               {selectedWorkspace ? (
                 <WorkspaceSidebar />
               ) : (
-                <div className="flex-grow min-h-0 bg-white dark:bg-slate-850 flex flex-col h-full">
+                <div className="flex-grow min-h-0 bg-base-100 flex flex-col h-full">
                   {activeTab === "chats" && (
                     <ConversationList onBurgerClick={() => setIsMobileDrawerOpen(true)} />
                   )}

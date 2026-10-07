@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getUserHandle } from "../lib/utils";
 import { Link } from "react-router-dom";
+import Avatar from "./Avatar";
 const UsersPanel = ({ setActiveTab }) => {
   const { getUsers, users, isUsersLoading, setSelectedUser } = useChatStore();
   const { authUser } = useAuthStore();
@@ -99,14 +100,14 @@ const UsersPanel = ({ setActiveTab }) => {
   const totalRequestsCount = requests.length;
 
   return (
-    <div data-context="friends-section" className="h-full w-full bg-white dark:bg-slate-800 flex flex-col transition-all duration-200 border-r border-slate-200 dark:border-slate-700 select-none animate-fadeIn">
+    <div data-context="friends-section" className="h-full w-full bg-base-100 flex flex-col transition-all duration-200 border-r border-base-300 select-none animate-fadeIn">
       {/* Header */}
       <div className="px-5 pt-6 pb-4 flex-shrink-0">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-          <Users className="w-5 h-5 text-blue-500" />
+        <h2 className="text-xl font-bold text-base-content flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" />
           People
         </h2>
-        <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
+        <p className="text-xs text-base-content/60 font-semibold mt-0.5">
           Find and connect with people on Blink
         </p>
 
@@ -117,63 +118,63 @@ const UsersPanel = ({ setActiveTab }) => {
             placeholder="Search people..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-base-200 border border-base-300 rounded-xl pl-10 pr-4 py-2 text-sm text-base-content placeholder:text-base-content/40 focus:outline-none focus:border-primary transition-colors"
           />
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-2.5 w-4 h-4 text-base-content/60" />
         </div>
 
         {/* Sub-Tabs */}
-        <div className="flex border-b border-slate-100 dark:border-slate-700/50 mt-4 gap-4 text-sm font-bold">
+        <div className="flex border-b border-base-300 mt-4 gap-4 text-sm font-bold">
           <button
             onClick={() => setActiveSubTab("explore")}
             className={`pb-2.5 flex items-center gap-1.5 transition-colors relative ${
               activeSubTab === "explore"
-                ? "text-blue-500"
-                : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-350"
+                ? "text-primary"
+                : "text-base-content/60 hover:text-base-content/60"
             }`}
           >
             <Globe className="w-4 h-4" />
             Explore
             {activeSubTab === "explore" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
             )}
           </button>
           <button
             onClick={() => setActiveSubTab("friends")}
             className={`pb-2.5 flex items-center gap-1.5 transition-colors relative ${
               activeSubTab === "friends"
-                ? "text-blue-500"
-                : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-350"
+                ? "text-primary"
+                : "text-base-content/60 hover:text-base-content/60"
             }`}
           >
             <Users className="w-4 h-4" />
             Friends
             {friends.length > 0 && (
-              <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-350 px-1.5 py-0.5 rounded-full">
+              <span className="text-[10px] bg-base-200 text-base-content/60 px-1.5 py-0.5 rounded-full">
                 {friends.length}
               </span>
             )}
             {activeSubTab === "friends" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
             )}
           </button>
           <button
             onClick={() => setActiveSubTab("requests")}
             className={`pb-2.5 flex items-center gap-1.5 transition-colors relative ${
               activeSubTab === "requests"
-                ? "text-blue-500"
-                : "text-slate-400 hover:text-slate-500 dark:hover:text-slate-350"
+                ? "text-primary"
+                : "text-base-content/60 hover:text-base-content/60"
             }`}
           >
             <Inbox className="w-4 h-4" />
             Requests
             {totalRequestsCount > 0 && (
-              <span className="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+              <span className="text-[10px] bg-primary text-base-content px-1.5 py-0.5 rounded-full font-bold animate-pulse">
                 {totalRequestsCount}
               </span>
             )}
             {activeSubTab === "requests" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
             )}
           </button>
         </div>
@@ -183,8 +184,8 @@ const UsersPanel = ({ setActiveTab }) => {
       <div className="flex-grow overflow-y-auto px-5 pb-6 space-y-3">
         {isUsersLoading ? (
           <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <div className="size-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-            <p className="text-xs text-slate-400 font-semibold">Loading people...</p>
+            <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <p className="text-xs text-base-content/60 font-semibold">Loading people...</p>
           </div>
         ) : activeSubTab !== "requests" ? (
           /* Explore and Friends Tab */
@@ -199,23 +200,19 @@ const UsersPanel = ({ setActiveTab }) => {
                   key={user._id}
                   data-context="conversation"
                   data-user-id={user._id}
-                  className="flex items-center justify-between p-3.5 bg-slate-50/60 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-slate-900/40"
+                  className="flex items-center justify-between p-3.5 bg-base-200/60 border border-base-300 rounded-2xl transition-all hover:bg-base-200"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative flex-shrink-0">
-                      <img
-                        src={user.profilePic || "/avatar.png"}
-                        alt={user.fullName}
-                        className="size-11 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                      />
+                      <Avatar user={user} className="size-11 border border-base-300" />
                       {isOnline ? (
-                        <div className="absolute bottom-0 right-0 size-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800" />
+                        <div className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-base-100" />
                       ) : (
-                        <div className="absolute bottom-0 right-0 size-3 bg-slate-350 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-800" />
+                        <div className="absolute bottom-0 right-0 size-3 bg-base-300 rounded-full border-2 border-base-100" />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
+                      <h4 className="font-bold text-sm text-base-content truncate flex items-center gap-1.5">
                         {user.fullName}
                         <Link
                           to={`/u/${getUserHandle(user).replace("@", "")}`}
@@ -225,12 +222,12 @@ const UsersPanel = ({ setActiveTab }) => {
                           {getUserHandle(user)}
                         </Link>
                         {isHelpCenter && (
-                          <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded-full font-bold select-none">
+                          <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full font-bold select-none">
                             Support
                           </span>
                         )}
                       </h4>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate font-semibold mt-0.5">
+                      <p className="text-[11px] text-base-content/60 truncate font-semibold mt-0.5">
                         {user.email}
                       </p>
                     </div>
@@ -241,7 +238,7 @@ const UsersPanel = ({ setActiveTab }) => {
                     {relState === "not_friends" && (
                       <button
                         onClick={() => sendRequest(user._id)}
-                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[11px] font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                        className="px-3 py-1.5 bg-primary hover:bg-primary text-base-content text-[11px] font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
                       >
                         <UserPlus size={13} />
                         Add Friend
@@ -251,7 +248,7 @@ const UsersPanel = ({ setActiveTab }) => {
                     {relState === "request_sent" && (
                       <button
                         disabled
-                        className="px-3 py-1.5 bg-slate-100 dark:bg-slate-750 text-slate-450 dark:text-slate-500 text-[11px] font-bold rounded-xl flex items-center gap-1.5 cursor-not-allowed border border-slate-200/50 dark:border-slate-700/50"
+                        className="px-3 py-1.5 bg-base-200 text-base-content/60 text-[11px] font-bold rounded-xl flex items-center gap-1.5 cursor-not-allowed border border-base-300/50"
                       >
                         <UserCheck size={13} />
                         Requested
@@ -262,14 +259,14 @@ const UsersPanel = ({ setActiveTab }) => {
                       <div className="flex gap-1">
                         <button
                           onClick={() => acceptRequest(user._id)}
-                          className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-sm active:scale-95"
+                          className="p-1.5 bg-primary hover:bg-primary text-base-content rounded-xl transition-all shadow-sm active:scale-95"
                           title="Accept Request"
                         >
                           <UserCheck size={14} />
                         </button>
                         <button
                           onClick={() => declineRequest(user._id)}
-                          className="p-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all shadow-sm active:scale-95"
+                          className="p-1.5 bg-rose-500 hover:bg-rose-600 text-base-content rounded-xl transition-all shadow-sm active:scale-95"
                           title="Decline Request"
                         >
                           <UserX size={14} />
@@ -280,7 +277,7 @@ const UsersPanel = ({ setActiveTab }) => {
                     {relState === "friends" && (
                       <button
                         onClick={() => handleMessageClick(user)}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-[11px] font-bold rounded-xl flex items-center gap-1.5 transition-all active:scale-95"
+                        className="px-3 py-1.5 bg-base-200 hover:bg-base-200 text-base-content/60 text-[11px] font-bold rounded-xl flex items-center gap-1.5 transition-all active:scale-95"
                       >
                         <MessageSquare size={13} />
                         Message
@@ -290,7 +287,7 @@ const UsersPanel = ({ setActiveTab }) => {
                     {/* Block option */}
                     <button
                       onClick={() => blockUser(user._id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-colors"
+                      className="p-1.5 text-base-content/60 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
                       title="Block User"
                     >
                       <Ban size={13} />
@@ -301,8 +298,8 @@ const UsersPanel = ({ setActiveTab }) => {
             })
           ) : (
             <div className="text-center py-12 flex flex-col items-center justify-center">
-              <Globe className="w-10 h-10 text-slate-300 dark:text-slate-655 mb-2.5" />
-              <p className="text-sm font-semibold text-slate-400 dark:text-slate-500">
+              <Globe className="w-10 h-10 text-base-content mb-2.5" />
+              <p className="text-sm font-semibold text-base-content/60">
                 {searchInput ? "No matching profiles found" : "No users found"}
               </p>
             </div>
@@ -312,7 +309,7 @@ const UsersPanel = ({ setActiveTab }) => {
           <div className="space-y-6">
             {/* Incoming Requests */}
             <div>
-              <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-base-content/60 tracking-wider uppercase mb-3 flex items-center gap-1.5">
                 Incoming Requests ({requests.length})
               </h3>
               {filterBySearch(requests.map((r) => r.requesterId)).length > 0 ? (
@@ -325,23 +322,19 @@ const UsersPanel = ({ setActiveTab }) => {
                         key={requester._id}
                         data-context="conversation"
                         data-user-id={requester._id}
-                        className="flex items-center justify-between p-3.5 bg-slate-50/60 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl"
+                        className="flex items-center justify-between p-3.5 bg-base-200/60 border border-base-300 rounded-2xl"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="relative flex-shrink-0">
-                            <img
-                              src={requester.profilePic || "/avatar.png"}
-                              alt={requester.fullName}
-                              className="size-11 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                            />
+                            <Avatar user={requester} className="size-11 border border-base-300" />
                             {isOnline ? (
-                              <div className="absolute bottom-0 right-0 size-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800" />
+                              <div className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-base-100" />
                             ) : (
-                              <div className="absolute bottom-0 right-0 size-3 bg-slate-350 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-800" />
+                              <div className="absolute bottom-0 right-0 size-3 bg-base-300 rounded-full border-2 border-base-100" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
+                            <h4 className="font-bold text-sm text-base-content truncate flex items-center gap-1.5">
                               {requester.fullName}
                               <Link
                                 to={`/u/${getUserHandle(requester).replace("@", "")}`}
@@ -351,7 +344,7 @@ const UsersPanel = ({ setActiveTab }) => {
                                 {getUserHandle(requester)}
                               </Link>
                             </h4>
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate font-semibold mt-0.5">
+                            <p className="text-[11px] text-base-content/60 truncate font-semibold mt-0.5">
                               {requester.email}
                             </p>
                           </div>
@@ -360,14 +353,14 @@ const UsersPanel = ({ setActiveTab }) => {
                         <div className="flex items-center gap-1 ml-2">
                           <button
                             onClick={() => acceptRequest(requester._id)}
-                            className="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-650 text-white text-[11px] font-bold rounded-xl flex items-center gap-1 transition-all shadow-sm active:scale-95"
+                            className="px-2.5 py-1.5 bg-primary hover:bg-primary text-base-content text-[11px] font-bold rounded-xl flex items-center gap-1 transition-all shadow-sm active:scale-95"
                           >
                             <UserCheck size={12} />
                             Accept
                           </button>
                           <button
                             onClick={() => declineRequest(requester._id)}
-                            className="px-2.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-bold rounded-xl flex items-center gap-1 transition-all shadow-sm active:scale-95"
+                            className="px-2.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-base-content text-[11px] font-bold rounded-xl flex items-center gap-1 transition-all shadow-sm active:scale-95"
                           >
                             <UserX size={12} />
                             Decline
@@ -378,7 +371,7 @@ const UsersPanel = ({ setActiveTab }) => {
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold italic pl-1">
+                <p className="text-xs text-base-content/60 font-semibold italic pl-1">
                   No incoming requests
                 </p>
               )}
@@ -386,7 +379,7 @@ const UsersPanel = ({ setActiveTab }) => {
 
             {/* Outgoing Requests */}
             <div>
-              <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
+              <h3 className="text-xs font-bold text-base-content/60 tracking-wider uppercase mb-3 flex items-center gap-1.5">
                 Sent Requests ({sentRequests.length})
               </h3>
               {filterBySearch(sentRequests.map((r) => r.receiverId)).length > 0 ? (
@@ -399,23 +392,19 @@ const UsersPanel = ({ setActiveTab }) => {
                         key={receiver._id}
                         data-context="conversation"
                         data-user-id={receiver._id}
-                        className="flex items-center justify-between p-3.5 bg-slate-50/60 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800 rounded-2xl"
+                        className="flex items-center justify-between p-3.5 bg-base-200/60 border border-base-300 rounded-2xl"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="relative flex-shrink-0">
-                            <img
-                              src={receiver.profilePic || "/avatar.png"}
-                              alt={receiver.fullName}
-                              className="size-11 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                            />
+                            <Avatar user={receiver} className="size-11 border border-base-300" />
                             {isOnline ? (
-                              <div className="absolute bottom-0 right-0 size-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800" />
+                              <div className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-base-100" />
                             ) : (
-                              <div className="absolute bottom-0 right-0 size-3 bg-slate-350 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-800" />
+                              <div className="absolute bottom-0 right-0 size-3 bg-base-300 rounded-full border-2 border-base-100" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
+                            <h4 className="font-bold text-sm text-base-content truncate flex items-center gap-1.5">
                               {receiver.fullName}
                               <Link
                                 to={`/u/${getUserHandle(receiver).replace("@", "")}`}
@@ -425,7 +414,7 @@ const UsersPanel = ({ setActiveTab }) => {
                                 {getUserHandle(receiver)}
                               </Link>
                             </h4>
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate font-semibold mt-0.5">
+                            <p className="text-[11px] text-base-content/60 truncate font-semibold mt-0.5">
                               {receiver.email}
                             </p>
                           </div>
@@ -433,7 +422,7 @@ const UsersPanel = ({ setActiveTab }) => {
 
                         <button
                           disabled
-                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-750 text-slate-400 dark:text-slate-500 text-[11px] font-bold rounded-xl flex items-center gap-1 border border-slate-200/50 dark:border-slate-700/50 cursor-not-allowed"
+                          className="px-3 py-1.5 bg-base-200 text-base-content/60 text-[11px] font-bold rounded-xl flex items-center gap-1 border border-base-300/50 cursor-not-allowed"
                         >
                           <UserCheck size={12} />
                           Requested
@@ -443,7 +432,7 @@ const UsersPanel = ({ setActiveTab }) => {
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold italic pl-1">
+                <p className="text-xs text-base-content/60 font-semibold italic pl-1">
                   No sent requests
                 </p>
               )}

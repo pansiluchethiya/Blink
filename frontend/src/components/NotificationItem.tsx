@@ -17,7 +17,7 @@ const NotificationItem = ({ notification }) => {
         return <MessageSquare className="size-3 text-primary" />;
       case "friend_request":
       case "friend_accept":
-        return <UserPlus className="size-3 text-emerald-500" />;
+        return <UserPlus className="size-3 text-primary" />;
       case "reaction":
         return <Heart className="size-3 text-rose-500" fill="currentColor" />;
       default:
@@ -42,27 +42,27 @@ const NotificationItem = ({ notification }) => {
   return (
     <div
       className={`group px-3 py-3 mx-2 rounded-2xl flex gap-3 transition-all duration-200 cursor-pointer relative ${
-        !notification.isRead ? "bg-primary/5 shadow-soft" : "hover:bg-slate-50 dark:hover:bg-slate-800"
+        !notification.isRead ? "bg-primary/5 shadow-soft" : "hover:bg-base-200"
       }`}
       onClick={handleClick}
     >
       <div className="relative">
         <Avatar src={notification.actor?.profilePic} size="md" />
-        <div className="absolute -bottom-1 -right-1 bg-surface dark:bg-surface-dark rounded-full p-1 border border-border dark:border-border-dark shadow-soft">
+        <div className="absolute -bottom-1 -right-1 bg-surface rounded-full p-1 border border-border shadow-soft">
           {getIcon()}
         </div>
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2 mb-0.5">
-          <p className={`text-sm leading-tight ${!notification.isRead ? "font-bold text-slate-900 dark:text-slate-100" : "font-semibold text-slate-700 dark:text-slate-300"}`}>
+          <p className={`text-sm leading-tight ${!notification.isRead ? "font-bold text-base-content" : "font-semibold text-base-content/60"}`}>
             {notification.title}
           </p>
-          <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap pt-0.5">
+          <span className="text-[10px] text-base-content/60 font-medium whitespace-nowrap pt-0.5">
             {formatDistanceToNow(new Date(notification.createdAt))}
           </span>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+        <p className="text-xs text-base-content/60 line-clamp-2">
           {notification.body}
         </p>
       </div>
@@ -73,7 +73,7 @@ const NotificationItem = ({ notification }) => {
           event.stopPropagation();
           await deleteNotification(notification._id);
         }}
-        className="absolute right-3 top-3 text-slate-400 hover:text-rose-500"
+        className="absolute right-3 top-3 text-base-content/60 hover:text-rose-500"
         title="Delete notification"
       >
         <Trash2 className="size-4" />
