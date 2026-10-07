@@ -47,6 +47,7 @@ const ChatContainer = () => {
     lockChat,
     unlockChat,
     setPendingAttachment,
+    getChatTheme,
   } = useChatStore();
   const [showProfile, setShowProfile] = useState(false);
   const [showActionDrawer, setShowActionDrawer] = useState(false);
@@ -174,7 +175,10 @@ const ChatContainer = () => {
 
   if (isMessagesLoading && messages.length === 0) {
     return (
-      <div className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark">
+      <div
+        data-theme={selectedUser ? getChatTheme(`dm:${selectedUser._id}`) ?? undefined : undefined}
+        className="flex-1 flex flex-col h-full bg-base-100"
+      >
         <ChatHeader 
           onAvatarClick={() => setShowProfile(true)} 
           onMoreClick={() => setShowActionDrawer(true)}
@@ -191,8 +195,9 @@ const ChatContainer = () => {
   ];
 
   return (
-    <div 
-      className="flex-1 flex flex-col h-full bg-background dark:bg-background-dark overflow-hidden relative transition-colors duration-200"
+    <div
+      data-theme={selectedUser ? getChatTheme(`dm:${selectedUser._id}`) ?? undefined : undefined}
+      className="flex-1 flex flex-col h-full bg-base-100 overflow-hidden relative transition-colors duration-200"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

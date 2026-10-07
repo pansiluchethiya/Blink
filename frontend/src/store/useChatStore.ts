@@ -50,6 +50,14 @@ interface ChatState {
   deleteMessage: (messageId: string) => Promise<void>;
   togglePinMessage: (messageId: string) => Promise<void>;
   setChatExpiry: (userId: string, expiryLabel: string, expiresAt: Date | null) => Promise<void>;
+  /** Local UI preference (e.g. sendOnEnter). Persisted to localStorage. */
+  setChatSetting: (key: string, value: any) => void;
+  /**
+   * Per-conversation theme (daisyUI theme name, or null for app default).
+   * chatKey: `dm:<userId>` | `channel:<channelId>`.
+   */
+  setChatTheme: (chatKey: string, themeName: string | null) => void;
+  getChatTheme: (chatKey: string) => string | null;
   getLockedChats: () => Promise<void>;
   lockChat: (userId: string, pin: string) => Promise<void>;
   unlockChat: (userId: string, pin: string) => Promise<boolean>;
@@ -452,6 +460,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (error: any) {
       useErrorStore.getState().handleApiError(error, "update chat expiry");
     }
+  },
+
+  setChatSetting: (key, value) => {
+    const chatSettings = { ...get().chatSettings, [key]: value };
+    try {
+      localStorage.setItem("chatSettings", JSON.stringify(chatSettings));
+    } catch { /* storage full/blocked — keep in-memory */ }
+    set({ chatSettings });
+  },
+
+  setChatTheme: (chatKey, themeName) => {
+    const chatSettings = { ...get().chatSettings };
+    if (themeName) {
+      chatSettings[`theme:${chatKey}`] = themeName;
+    } else {
+      delete chatSettings[`theme:${chatKey}`];
+    }
+    try {
+      localStorage.setItem("chatSettings", JSON.stringify(chatSettings));
+    } catch { /* storage full/blocked — keep in-memory */ }
+    set({ chatSettings });
+  },
+
+  getChatTheme: (chatKey) => {
+    const stored = get().chatSettings?.[`theme:${chatKey}`];
+    return typeof stored === "string" ? stored : null;
   },
 
   getLockedChats: async () => {
