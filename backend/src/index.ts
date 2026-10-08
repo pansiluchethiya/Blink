@@ -15,6 +15,7 @@ import messageRoutes from "./routes/message.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import friendshipRoutes from "./routes/friendship.route.js";
 import workspaceRoutes from "./routes/workspace.route.js";
+import widgetRoutes from "./routes/widget.route.js";
 import { app, server } from "./lib/socket.js";
 import { deleteExpiredMessages } from "./controllers/message.controller.js";
 import { deleteOldNotifications } from "./controllers/notification.controller.js";
@@ -74,6 +75,7 @@ app.use("/api/messages", generalLimiter, messageRoutes);
 app.use("/api/notifications", generalLimiter, notificationRoutes);
 app.use("/api/friends", generalLimiter, friendshipRoutes);
 app.use("/api/workspaces", generalLimiter, workspaceRoutes);
+app.use("/api/widgets", generalLimiter, widgetRoutes);
 
 app.all("/api/*", (req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

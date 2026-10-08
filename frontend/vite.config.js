@@ -71,13 +71,37 @@ export default defineConfig({
             name: 'Recent chats',
             description: 'Unread counts and recent conversations in Blink.',
             tag: 'blink-recent',
-            template: 'widgets/recent-template.html',
-            ms_ac_template: 'widgets/recent-ac.json',
+            template: 'widgets/recent-chats.html',
             data: '/api/widgets/recent',
-            type: 'application/widgets+json',
+            type: 'application/json',
+            auth: true,
+            update: 900,
+            screenshots: [
+              {
+                src: 'widgets/recent-chats-preview.png',
+                sizes: '400x300',
+                label: 'Recent chats widget',
+              },
+            ],
+            icons: [{ src: 'icon-192.png', sizes: '192x192' }],
           },
         ],
-        // screenshots[] wired after capture (see screenshots/ + Phase 4).
+        screenshots: [
+          {
+            src: 'screenshots/chat-wide.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Blink chats on desktop',
+          },
+          {
+            src: 'screenshots/chat-narrow.png',
+            sizes: '390x844',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Blink chats on mobile',
+          },
+        ],
         icons: [
           {
             src: 'blink.svg',
