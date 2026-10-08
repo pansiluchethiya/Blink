@@ -15,6 +15,10 @@ dist-ssr
 *.local
 screenshots
 !docs/screenshots/
+!frontend/public/screenshots/
+!frontend/public/screenshots/*
+!backend/public/screenshots/
+!backend/public/screenshots/*
 
 # Editor directories and files
 .vscode/*
