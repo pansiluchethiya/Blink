@@ -5,6 +5,14 @@ import { useAuthStore } from "./useAuthStore.js";
 import { useErrorStore } from "./useErrorStore.js";
 import { IMessage, IUser, IWorkspace } from "../types/index.js";
 import { encryptMessage } from "../lib/crypto.js";
+import { SyncService } from "../lib/sync.js";
+import {
+  dmConversationKey,
+  getCachedMessages,
+  getCachedUsers,
+  persistMessages,
+  persistUsers,
+} from "../lib/messageCache.js";
 
 interface ChatState {
   messages: IMessage[];
@@ -44,6 +52,8 @@ interface ChatState {
   searchUsers: (query: string) => Promise<void>;
   getMessages: (userId: string, isLoadMore?: boolean) => Promise<void>;
   sendMessage: (messageData: any) => Promise<void>;
+  /** Reconcile an outbox-queued temp message with the server response. */
+  mergeServerMessage: (tempId: string | undefined, serverMsg: IMessage, receiverId?: string) => void;
   addReaction: (messageId: string, emoji: string) => Promise<void>;
   removeReaction: (messageId: string, emoji: string) => Promise<void>;
   editMessage: (messageId: string, newText: string) => Promise<void>;
@@ -156,10 +166,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   getUsers: async () => {
     set({ isUsersLoading: true });
+    // Instant paint from cache; network revalidates below.
+    try {
+      const cached = await getCachedUsers();
+      if (cached.length > 0) set({ users: cached });
+    } catch { /* cache miss — skeleton stays */ }
     try {
       const res = await axiosInstance.get("/messages/users");
       const usersList = res.data;
       set({ users: usersList });
+      void persistUsers(usersList);
 
       // Auto-restore selected user from localStorage
       const savedUserId = localStorage.getItem("lastSelectedUserId");
@@ -196,10 +212,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } else {
       set({ isLoadingMoreMessages: true });
     }
-    
+
     try {
       const { selectedUser } = get();
       if (!selectedUser || selectedUser._id !== userId) return;
+      const authUser = useAuthStore.getState().authUser;
+      const cacheKey = authUser ? dmConversationKey(authUser._id, userId) : null;
+
+      // 1. Instant paint from IndexedDB (stale-while-revalidate).
+      if (!isLoadMore && cacheKey) {
+        const cached = await getCachedMessages(cacheKey, 30);
+        if (cached.length > 0 && get().selectedUser?._id === userId) {
+          set({ messages: cached });
+        }
+      }
 
       const { messages } = get();
       const before = isLoadMore && messages.length > 0 ? messages[0].createdAt : null;
@@ -212,18 +238,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (get().selectedUser?._id !== userId) return;
 
       const newMessages = res.data;
-      
+
       if (isLoadMore) {
+        const merged = [...newMessages, ...get().messages];
         set({
-          messages: [...newMessages, ...get().messages],
+          messages: merged,
           isMoreMessagesAvailable: newMessages.length === limit,
         });
+        if (cacheKey) void persistMessages(cacheKey, merged.slice(-120));
       } else {
-        set({ 
+        set({
           messages: newMessages,
           isMoreMessagesAvailable: newMessages.length === limit,
           users: get().users.map(u => u._id === userId ? { ...u, unreadCount: 0 } : (u as any))
         });
+        if (cacheKey) void persistMessages(cacheKey, newMessages);
       }
 
       if (!isLoadMore) {
@@ -248,6 +277,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  mergeServerMessage: (tempId, serverMsg, receiverId) => {
+    const { messages, selectedUser } = get();
+    if (tempId && messages.some((m) => m._id === tempId)) {
+      set({ messages: messages.map((m) => (m._id === tempId ? serverMsg : m)) });
+    } else if (receiverId && selectedUser?._id === receiverId) {
+      if (!get().messages.some((m) => m._id === serverMsg._id)) {
+        set({ messages: [...get().messages, serverMsg] });
+      }
+    }
+    if (receiverId) {
+      set({
+        users: get().users.map((u) =>
+          u._id === receiverId ? { ...u, lastMessage: serverMsg } : (u as any)
+        ),
+      });
+      const authUser = useAuthStore.getState().authUser;
+      if (authUser) void persistMessages(dmConversationKey(authUser._id, receiverId), get().messages);
+    }
+  },
+
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     if (!selectedUser) return;
@@ -263,6 +312,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     let imagePreviewUrl = "";
     let replyTo = null;
     let fileMeta: Record<string, any> | null = null;
+    let viewOnce: unknown = undefined;
+    let expiresAt: string | undefined = undefined;
+    let hasBinaryUpload = false;
 
     const parseMeta = (v: unknown): Record<string, any> | null => {
       if (!v) return null;
@@ -289,6 +341,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       text = messageData.get("text") as string || "";
       const fileVal = messageData.get("file");
       if (fileVal && typeof fileVal !== "string") {
+        hasBinaryUpload = true;
         fileName = (fileVal as File).name;
         fileType = (fileVal as File).type;
         fileSize = (fileVal as File).size;
@@ -299,15 +352,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (typeof imageVal === "string") {
           imagePreviewUrl = imageVal;
         } else {
+          hasBinaryUpload = true;
           imagePreviewUrl = URL.createObjectURL(imageVal as File);
         }
       }
       replyTo = messageData.get("replyTo") as string || null;
       fileMeta = parseMeta(messageData.get("fileMeta"));
+      viewOnce = messageData.get("viewOnce") as string || undefined;
+      const expVal = messageData.get("expiresAt");
+      expiresAt = typeof expVal === "string" ? expVal : undefined;
     } else {
       text = messageData.text || "";
       if (messageData.file) {
         if (isUploadable(messageData.file)) {
+          hasBinaryUpload = true;
           fileName = messageData.file.name;
           fileType = messageData.file.type;
           fileSize = messageData.file.size;
@@ -320,10 +378,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (typeof messageData.image === "string") {
           imagePreviewUrl = messageData.image;
         } else {
+          hasBinaryUpload = true;
           imagePreviewUrl = URL.createObjectURL(messageData.image);
         }
       }
       replyTo = messageData.replyTo || null;
+      viewOnce = messageData.viewOnce;
+      expiresAt = messageData.expiresAt instanceof Date
+        ? messageData.expiresAt.toISOString()
+        : messageData.expiresAt;
       const extraMeta = parseMeta(messageData.fileMeta);
       if (extraMeta) fileMeta = { ...(fileMeta ?? {}), ...extraMeta };
     }
@@ -397,10 +460,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
         users: get().users.map(u => u._id === selectedUser._id ? { ...u, lastMessage: finalMsg } : (u as any))
       });
     } catch (error: any) {
-      set({
-        messages: get().messages.filter(msg => msg._id !== tempId)
-      });
-      useErrorStore.getState().handleApiError(error, "send message");
+      const offline =
+        typeof navigator === "undefined" || !navigator.onLine || !error?.response;
+      if (offline && !hasBinaryUpload) {
+        // Keep the optimistic message and retry via the IndexedDB outbox.
+        set({
+          messages: get().messages.map((msg) =>
+            msg._id === tempId ? { ...msg, queued: true } : msg
+          ),
+        });
+        try {
+          await SyncService.queueAction("sendMessage", {
+            receiverId: selectedUser._id,
+            tempId,
+            ...(text ? { text } : {}),
+            ...(imagePreviewUrl ? { image: imagePreviewUrl } : {}),
+            ...(replyTo ? { replyTo } : {}),
+            ...(fileMeta ? { fileMeta } : {}),
+            ...(viewOnce ? { viewOnce } : {}),
+            ...(expiresAt ? { expiresAt } : {}),
+          });
+          toast("Offline — message will send on reconnect", { icon: "📨" });
+        } catch {
+          set({
+            messages: get().messages.filter((msg) => msg._id !== tempId),
+          });
+          useErrorStore.getState().handleApiError(error, "send message");
+        }
+      } else {
+        set({
+          messages: get().messages.filter(msg => msg._id !== tempId)
+        });
+        useErrorStore.getState().handleApiError(error, "send message");
+      }
     }
   },
 

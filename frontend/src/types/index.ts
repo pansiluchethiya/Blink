@@ -64,6 +64,8 @@ export interface IMessage {
   createdAt: string;
   updatedAt: string;
   isSending?: boolean;
+  /** Queued in the offline outbox; will send automatically on reconnect. */
+  queued?: boolean;
 }
 
 export interface IWorkspace {

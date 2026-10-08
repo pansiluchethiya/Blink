@@ -203,6 +203,12 @@ const ChatContainer = () => {
       />
 
       <div className="flex-1 overflow-hidden chat-bg-pattern relative">
+        {/* Slim refresh shimmer while cached messages revalidate (SWR). */}
+        {isMessagesLoading && messages.length > 0 && (
+          <div className="absolute top-0 inset-x-0 z-10 flex justify-center pt-2 pointer-events-none">
+            <div className="skeleton h-2 w-28 rounded-full" aria-hidden="true" />
+          </div>
+        )}
         <MessageVirtualizer
           items={virtualItems}
           renderItem={renderItem}
