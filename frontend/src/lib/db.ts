@@ -13,10 +13,29 @@ export interface CachedMessage extends IMessage {
   conversationKey: string;
 }
 
+/** One-slot stash for an inbound OS share (share_target POST / file_handlers). */
+export interface ShareStash {
+  id: string;
+  title?: string;
+  text?: string;
+  url?: string;
+  files?: File[];
+  ts: number;
+}
+
+/** Local-only quick note (note_taking integration, no backend). */
+export interface QuickNote {
+  id?: number;
+  text: string;
+  updatedAt: number;
+}
+
 export class ChatDatabase extends Dexie {
   messages!: Table<CachedMessage, string>;
   users!: Table<IUser, string>;
   pendingActions!: Table<PendingAction, number>;
+  shareStash!: Table<ShareStash, string>;
+  notes!: Table<QuickNote, number>;
 
   constructor() {
     super('BlinkChatDB');
@@ -32,6 +51,14 @@ export class ChatDatabase extends Dexie {
       messages: '_id, conversationKey, createdAt',
       users: '_id, username, email',
       pendingActions: '++id, type, timestamp'
+    });
+    // v3: share stash + local notes. Cache/utility tables — safe to recreate.
+    this.version(3).stores({
+      messages: '_id, conversationKey, createdAt',
+      users: '_id, username, email',
+      pendingActions: '++id, type, timestamp',
+      shareStash: 'id',
+      notes: '++id, updatedAt'
     });
   }
 }

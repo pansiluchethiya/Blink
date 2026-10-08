@@ -4,6 +4,7 @@ import { registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { db } from './lib/db.js';
 
 const swSelf = self as any;
 
@@ -26,6 +27,39 @@ precacheAndRoute(self.__WB_MANIFEST || []);
  * PWABuilder looks for a fetch listener that handles navigation requests.
  */
 swSelf.addEventListener('fetch', (event: any) => {
+  const url = new URL(event.request.url);
+
+  // OS share sheet (share_target): stash the payload in IndexedDB and
+  // hand off to the /share route — the backend never sees this request.
+  if (event.request.method === 'POST' && url.pathname === '/share-target') {
+    event.respondWith(
+      (async () => {
+        try {
+          const form = await event.request.formData();
+          const str = (k: string) => {
+            const v = form.get(k);
+            return typeof v === 'string' && v.length > 0 ? v : undefined;
+          };
+          const files = form
+            .getAll('files')
+            .filter((v: unknown) => v instanceof File && (v as File).size > 0) as File[];
+          await db.shareStash.put({
+            id: 'share',
+            title: str('title'),
+            text: str('text'),
+            url: str('url'),
+            files: files.length > 0 ? files : undefined,
+            ts: Date.now(),
+          });
+        } catch (e) {
+          console.warn('[Service Worker] share stash failed:', e);
+        }
+        return Response.redirect('/share', 303);
+      })()
+    );
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {

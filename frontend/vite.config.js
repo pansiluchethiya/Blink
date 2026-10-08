@@ -14,13 +14,70 @@ export default defineConfig({
         name: 'Blink by IOP',
         short_name: 'Blink',
         description: 'Blink by IOP — fast, practical chat for friends and teams.',
+        lang: 'en-US',
+        dir: 'ltr',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
+        display_override: ['window-controls-overlay', 'tabbed'],
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
         categories: ['communication', 'social', 'utilities'],
+        prefer_related_applications: false,
+        launch_handler: {
+          client_mode: 'focus-existing',
+        },
+        edge_side_panel: {
+          preferred_width: 400,
+        },
+        // Local-only quick notes (no backend): see NotesPage + db.notes.
+        note_taking: {
+          new_note_url: '/notes',
+        },
+        protocol_handlers: [
+          {
+            protocol: 'web+blink',
+            url: '/protocol?url=%s',
+          },
+        ],
+        file_handlers: [
+          {
+            action: '/share',
+            accept: {
+              'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+              'video/*': ['.mp4', '.webm', '.mov'],
+            },
+          },
+        ],
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url',
+            files: [
+              {
+                name: 'files',
+                accept: ['image/*', 'video/*'],
+              },
+            ],
+          },
+        },
+        widgets: [
+          {
+            name: 'Recent chats',
+            description: 'Unread counts and recent conversations in Blink.',
+            tag: 'blink-recent',
+            template: 'widgets/recent-template.html',
+            ms_ac_template: 'widgets/recent-ac.json',
+            data: '/api/widgets/recent',
+            type: 'application/widgets+json',
+          },
+        ],
+        // screenshots[] wired after capture (see screenshots/ + Phase 4).
         icons: [
           {
             src: 'blink.svg',
@@ -57,6 +114,16 @@ export default defineConfig({
           {
             name: 'Open Chats',
             url: '/',
+            icons: [{ src: 'blink.svg', sizes: '192x192' }]
+          },
+          {
+            name: 'Settings',
+            url: '/settings',
+            icons: [{ src: 'blink.svg', sizes: '192x192' }]
+          },
+          {
+            name: 'New Note',
+            url: '/notes',
             icons: [{ src: 'blink.svg', sizes: '192x192' }]
           }
         ]

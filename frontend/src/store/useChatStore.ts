@@ -87,6 +87,9 @@ interface ChatState {
   setCommandPaletteOpen: (isOpen: boolean) => void;
   toggleCommandPalette: () => void;
   setPendingAttachment: (attachment: File | null) => void;
+  /** Inbound OS share / file-handler payload waiting for a target chat. */
+  incomingShare: { text: string; files: File[] } | null;
+  setIncomingShare: (share: { text: string; files: File[] } | null) => void;
   markAsUnread: (userId: string) => void;
   setReplyingToMessage: (message: IMessage | null) => void;
   exportChat: (userId: string, format?: string, includeDeleted?: boolean) => Promise<any>;
@@ -142,6 +145,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isMoreMessagesAvailable: true,
   isCommandPaletteOpen: false,
   pendingAttachment: null,
+  incomingShare: null,
   lightboxImage: null,
   
 
@@ -1083,6 +1087,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   toggleCommandPalette: () => set({ isCommandPaletteOpen: !get().isCommandPaletteOpen }),
 
   setPendingAttachment: (attachment) => set({ pendingAttachment: attachment }),
+
+  setIncomingShare: (share) => set({ incomingShare: share }),
   setLightboxImage: (lightboxImage) => set({ lightboxImage }),
 
   markAsUnread: (userId) => {
