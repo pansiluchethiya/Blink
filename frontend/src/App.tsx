@@ -1,12 +1,16 @@
 import React, { useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
+import TitleBar from "./components/TitleBar";
 import AppLayout from "./AppLayout";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import SharePage from "./pages/SharePage";
+import ProtocolPage from "./pages/ProtocolPage";
+import NotesPage from "./pages/NotesPage";
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useErrorStore } from "./store/useErrorStore";
@@ -56,6 +60,27 @@ const App: React.FC = () => {
   const { fetchFriends, fetchRequests, subscribeToFriendEvents, unsubscribeFromFriendEvents } = useFriendStore();
   const { subscribeToMessages, unsubscribeFromMessages, initWorkspaces } = useChatStore();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // PWA file_handlers: files opened with Blink arrive via launchQueue.
+  useEffect(() => {
+    const lq = (navigator as any)?.launchQueue;
+    if (!lq?.setConsumer) return;
+    lq.setConsumer(async (params: any) => {
+      const files: File[] = [];
+      for (const handle of params?.files ?? []) {
+        try {
+          const f = await handle.getFile();
+          if (f) files.push(f);
+        } catch {
+          /* unreadable file — skip */
+        }
+      }
+      if (files.length === 0) return;
+      useChatStore.getState().setIncomingShare({ text: "", files });
+      navigate("/share");
+    });
+  }, [navigate]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -122,6 +147,7 @@ const App: React.FC = () => {
     <ThemeProvider>
       <ContextMenuProvider>
         <div className="min-h-screen bg-base-100 text-base-content transition-colors duration-200">
+          <TitleBar />
           {!(authUser && isHomePage) && <Navbar />}
           <RequireAuth>
             <Routes>
@@ -131,6 +157,9 @@ const App: React.FC = () => {
                 <Route path="login" element={<LoginPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="share" element={<SharePage />} />
+                <Route path="protocol" element={<ProtocolPage />} />
+                <Route path="notes" element={<NotesPage />} />
               </Route>
             </Routes>
           </RequireAuth>

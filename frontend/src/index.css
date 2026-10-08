@@ -132,3 +132,26 @@
   border-radius: 1rem;
   border: 1px solid oklch(var(--bc) / 0.1);
 }
+
+/* ===== Installed-app custom title bar (window-controls-overlay) ===== */
+#blink-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: env(titlebar-area-height, 33px);
+  padding-left: env(titlebar-area-x, 12px);
+  width: env(titlebar-area-width, 100%);
+  -webkit-app-region: drag;
+  app-region: drag;
+  background: oklch(var(--b1));
+  color: oklch(var(--bc));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+#blink-titlebar img {
+  width: 16px;
+  height: 16px;
+}
