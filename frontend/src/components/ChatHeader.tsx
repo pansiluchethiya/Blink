@@ -1,10 +1,10 @@
-import { X, Search, Phone, Video, ArrowLeft, MoreHorizontal } from "lucide-react";
+import { X, Search, Phone, Video, ArrowLeft, MoreHorizontal, PanelRight } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import toast from "react-hot-toast";
 import Avatar from "./Avatar";
 
-const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick, onMoreClick }) => {
+const ChatHeader = ({ onSearchClick, onMediaClick, mediaOpen, onPinnedClick, onBurgerClick, onAvatarClick, onMoreClick }) => {
    const { selectedUser, setSelectedUser, userStatus } = useChatStore();
    const { onlineUsers: authOnlineUsers } = useAuthStore();
 
@@ -73,6 +73,14 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
           </button>
 
           <div className="w-[1px] h-6 bg-base-300 mx-1 hidden sm:block" />
+
+          <button
+            onClick={onMediaClick}
+            className={`p-2.5 rounded-full transition-all ${mediaOpen ? "bg-primary/10 text-primary" : "text-base-content/50 hover:text-base-content hover:bg-base-200"}`}
+            title="Shared media"
+          >
+            <PanelRight size={20} />
+          </button>
 
           <button
             onClick={onSearchClick}

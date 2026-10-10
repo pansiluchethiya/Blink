@@ -16,6 +16,7 @@ import { useAuthStore } from "./store/useAuthStore";
 import { useErrorStore } from "./store/useErrorStore";
 import { useChatStore } from "./store/useChatStore";
 import { useFriendStore } from "./store/useFriendStore";
+import { useFolderStore } from "./store/useFolderStore";
 
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
@@ -124,6 +125,7 @@ const App: React.FC = () => {
       subscribeToFriendEvents();
       subscribeToMessages();
       initWorkspaces();
+      useFolderStore.getState().fetchFolders();
       return () => {
         unsubscribeFromFriendEvents();
         unsubscribeFromMessages();

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 const MAX_FILE_SIZE_MB = 7;
 
 const ProfilePage = () => {
-  const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
+  const { authUser, isUpdatingProfile, updateProfile, uploadAvatar } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
   
   // Local state for debounced fields
@@ -74,12 +74,12 @@ const ProfilePage = () => {
       return;
     }
 
+    // Instant local preview; the file itself goes to POST /auth/avatar.
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
-      const base64Image = reader.result as string;
-      setSelectedImg(base64Image);
-      await updateProfile({ profilePic: base64Image });
+      setSelectedImg(reader.result as string);
+      await uploadAvatar(file);
     };
   };
 

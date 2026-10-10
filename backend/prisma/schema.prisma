@@ -84,6 +84,7 @@ model User {
   pollsCreated        WorkspacePoll[]
   resourcesUploaded   WorkspaceResource[]
   scheduledMessages   ScheduledMessage[]
+  folders             Folder[]
 
   @@index([email])
   @@index([username])
@@ -322,6 +323,21 @@ model WorkspaceResource {
 
   @@index([workspaceId, channelId])
   @@map("workspace_resources")
+}
+
+model Folder {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @db.Uuid
+  name      String   @db.VarChar(24)
+  color     String   @default("#F59E0B")
+  memberIds String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("folders")
 }
 
 model Notification {

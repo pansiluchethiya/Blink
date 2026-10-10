@@ -13,6 +13,7 @@ import {
   togglePinMessage,
   getPinnedMessages,
   searchMessages,
+  getSharedMedia,
   forwardMessage,
   updateUserStatus,
   getUserStatus,
@@ -47,6 +48,7 @@ router.delete("/:messageId", protectRoute, deleteMessage);
 router.patch("/pin/message/:messageId", protectRoute, togglePinMessage);
 router.get("/pinned/:userId", protectRoute, getPinnedMessages);
 router.get("/search/:userId", protectRoute, searchMessages);
+router.get("/media/:userId", protectRoute, getSharedMedia);
 router.post("/forward/:messageId", protectRoute, forwardMessage);
 
 router.post("/status/update", protectRoute, updateUserStatus);

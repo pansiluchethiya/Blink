@@ -28,6 +28,7 @@ interface AuthState {
     publicProfile?: { bio?: string },
     privateProfile?: { isPrivate?: boolean }
   }) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
   connectSocket: () => void;
   disconnectSocket: () => void;
 }
@@ -122,6 +123,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       console.log("error in update profile:", error);
       toast.error(error.response.data.message);
+    } finally {
+      set({ isUpdatingProfile: false });
+    }
+  },
+
+  uploadAvatar: async (file) => {
+    set({ isUpdatingProfile: true });
+    try {
+      const form = new FormData();
+      form.append("avatar", file);
+      const res = await axiosInstance.post("/auth/avatar", form);
+      set({ authUser: res.data });
+      toast.success("Profile photo updated");
+    } catch (error: any) {
+      console.log("error in upload avatar:", error);
+      toast.error(error?.response?.data?.message || error?.response?.data?.error || "Failed to upload photo");
     } finally {
       set({ isUpdatingProfile: false });
     }

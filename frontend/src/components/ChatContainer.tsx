@@ -5,6 +5,7 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import MessageItem from "./MessageItem";
 import MessageSearch from "./MessageSearch";
+import SharedMediaPanel from "./SharedMediaPanel";
 import MessageVirtualizer from "./MessageVirtualizer";
 import Avatar from "./Avatar";
 import UserProfilePanel from "./UserProfilePanel";
@@ -55,6 +56,7 @@ const ChatContainer = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showActionDrawer, setShowActionDrawer] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showMedia, setShowMedia] = useState(false);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -168,6 +170,7 @@ const ChatContainer = () => {
     if (selectedUser?._id) {
       getMessages(selectedUser._id);
       setShowSearch(false);
+      setShowMedia(false);
     }
   }, [selectedUser?._id, getMessages]);
 
@@ -195,15 +198,18 @@ const ChatContainer = () => {
 
   return (
     <div
-      className={`flex-1 flex flex-col h-full bg-base-100 overflow-hidden relative transition-colors duration-200 ${selectedUser ? chatAccentClass(getChatTheme(`dm:${selectedUser._id}`)) : ""}`}
+      className={`flex-1 flex h-full bg-base-100 overflow-hidden relative transition-colors duration-200 ${selectedUser ? chatAccentClass(getChatTheme(`dm:${selectedUser._id}`)) : ""}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <div className="flex-1 flex flex-col min-w-0 h-full">
       <ChatHeader 
         onAvatarClick={() => setShowProfile(true)} 
         onMoreClick={() => setShowActionDrawer(true)}
         onSearchClick={() => setShowSearch((v) => !v)}
+        onMediaClick={() => setShowMedia((v) => !v)}
+        mediaOpen={showMedia}
       />
 
       {showSearch && selectedUser && (
@@ -239,6 +245,12 @@ const ChatContainer = () => {
       </div>
 
       <MessageInput />
+
+      </div>
+
+      {showMedia && selectedUser && (
+        <SharedMediaPanel userId={selectedUser._id} onClose={() => setShowMedia(false)} />
+      )}
 
       <UserProfilePanel 
         user={selectedUser} 

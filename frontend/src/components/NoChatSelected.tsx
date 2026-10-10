@@ -6,10 +6,10 @@ const NoChatSelected = () => {
       <div className="max-w-md text-center flex flex-col items-center">
         {/* Animated Icon Display */}
         <div className="relative mb-8">
-          <div className="size-24 rounded-[32px] bg-base-200 border border-base-300 flex items-center justify-center animate-pulse">
-            <Zap className="size-12 text-primary fill-primary/20" />
+          <div className="size-24 rounded-[28px] bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
+            <Zap className="size-12 text-primary-content fill-primary-content/20" />
           </div>
-          <div className="absolute -bottom-2 -right-2 size-10 rounded-2xl bg-base-100 border border-base-300 shadow-lg flex items-center justify-center">
+          <div className="absolute -bottom-2 -right-2 size-10 rounded-2xl bg-base-100 border border-base-200 shadow-lg flex items-center justify-center">
             <MessageSquare className="size-5 text-primary" />
           </div>
         </div>

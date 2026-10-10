@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
 import { prisma, toResponse, toList, isValidId } from "../lib/prisma.js";
 import cloudinary from "../lib/cloudinary.js";
 import { resolveImageUrl, parseFileMeta } from "../lib/attachments.js";
@@ -751,8 +752,85 @@ export const searchMessages = async (req: AuthRequest, res: Response): Promise<a
   }
 };
 
-export const setChatDisappearing = async (req: AuthRequest, res: Response): Promise<any> => {
+// Aggregated shared media for the v3 media panel: images, videos, files + links
+// for one DM thread, newest first. Single query, split in JS.
+export const getSharedMedia = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
+    const { userId } = req.params;
+    const myId = meId(req);
+
+    if (!isValidId(userId as string)) {
+      return res.status(400).json({ error: "Invalid user id" });
+    }
+
+    const rows = await prisma.message.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { senderId: myId, receiverId: String(userId) },
+              { senderId: String(userId), receiverId: myId },
+            ],
+          },
+          { isDeleted: false },
+          { isExpired: false },
+          {
+            OR: [
+              { image: { not: null } },
+              { file: { not: Prisma.DbNull } },
+              { text: { contains: "http" } },
+            ],
+          },
+        ],
+      },
+      select: {
+        id: true,
+        senderId: true,
+        text: true,
+        image: true,
+        file: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 300,
+    });
+
+    const linkRegex = /(https?:\/\/[^\s<]+[^.,:;"'!)\]\s])/;
+    const images: any[] = [];
+    const videos: any[] = [];
+    const files: any[] = [];
+    const links: any[] = [];
+
+    for (const m of rows as any[]) {
+      const f = (m.file ?? null) as { url?: string; name?: string; type?: string; size?: number } | null;
+      const fType = f && typeof f.type === "string" ? f.type : "";
+      const imgUrl = typeof m.image === "string" && m.image ? m.image : "";
+      const fileUrl = f && typeof f.url === "string" && f.url ? f.url : "";
+
+      if (fType.startsWith("video/") && fileUrl) {
+        videos.push({ id: m.id, url: fileUrl, name: f?.name ?? "Video", type: fType, size: f?.size ?? 0, createdAt: m.createdAt, senderId: m.senderId });
+      } else if ((fType.startsWith("image/") && fileUrl) || (imgUrl && !fileUrl)) {
+        images.push({ id: m.id, url: fileUrl || imgUrl, name: f?.name ?? "Image", type: fType || "image", size: f?.size ?? 0, createdAt: m.createdAt, senderId: m.senderId });
+      } else if (fileUrl) {
+        files.push({ id: m.id, url: fileUrl, name: f?.name ?? "File", type: fType || "file", size: f?.size ?? 0, createdAt: m.createdAt, senderId: m.senderId });
+      }
+
+      if (typeof m.text === "string") {
+        const match = m.text.match(linkRegex);
+        if (match) {
+          links.push({ id: m.id, url: match[0], createdAt: m.createdAt, senderId: m.senderId });
+        }
+      }
+    }
+
+    res.status(200).json({ images, videos, files, links });
+  } catch (error: any) {
+    console.log("Error in getSharedMedia: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const setChatDisappearing = async (req: AuthRequest, res: Response): Promise<any> => {  try {
     const { userId } = req.params;
     const { expiryLabel, expiresAt } = req.body;
     const myId = meId(req);

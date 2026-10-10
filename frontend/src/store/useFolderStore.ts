@@ -1,13 +1,13 @@
 import { create } from "zustand";
+import { axiosInstance } from "../lib/axios";
 
 /**
  * Chat folders (the CATEGORIES section of the chat list).
  *
- * Local-first for v3 Phase 2: persisted to localStorage in an API-shaped
- * model (id / name / color / memberIds) so the Phase-6 backend (`Folder`
- * table + CRUD endpoints) can swap the persistence layer without touching
- * the UI. Single membership: assigning a chat to one folder removes it
- * from the others, keeping counts unambiguous.
+ * API-backed (Phase 6: `Folder` table + /api/folders) with a localStorage
+ * fallback so folders keep working offline. Same {id, name, color,
+ * memberIds} shape on both layers. Single membership: assigning a chat to
+ * one folder removes it from the others, keeping counts unambiguous.
  */
 
 export interface ChatFolder {
@@ -20,6 +20,8 @@ export interface ChatFolder {
 interface FolderState {
   folders: ChatFolder[];
   expanded: Record<string, boolean>;
+  hydrated: boolean;
+  fetchFolders: () => Promise<void>;
   addFolder: (name: string, color: string) => void;
   renameFolder: (id: string, name: string, color: string) => void;
   deleteFolder: (id: string) => void;
@@ -59,11 +61,48 @@ function persist(folders: ChatFolder[]) {
   }
 }
 
+const clean = (folders: unknown): ChatFolder[] | null => {
+  if (!Array.isArray(folders)) return null;
+  return (folders as any[]).filter(
+    (f) => f && typeof f.id === "string" && typeof f.name === "string" && Array.isArray(f.memberIds)
+  );
+};
+
 export const FOLDER_COLORS = ["#F59E0B", "#0EA5E9", "#8B5CF6", "#10B981", "#EC4899", "#64748B"];
 
 export const useFolderStore = create<FolderState>((set, get) => ({
   folders: loadFolders(),
   expanded: { "folder-freelancers": true },
+  hydrated: false,
+
+  fetchFolders: async () => {
+    if (get().hydrated) return;
+    try {
+      const res = await axiosInstance.get("/folders");
+      let folders = clean(res.data);
+      if (folders && folders.length === 0) {
+        // First run for this account: seed the server with the local set
+        // (defaults or previously-offline edits) so all devices converge.
+        for (const f of get().folders) {
+          try {
+            await axiosInstance.post("/folders", { name: f.name, color: f.color, memberIds: f.memberIds });
+          } catch {
+            /* keep going — partial seeds reconcile on next login */
+          }
+        }
+        const retry = await axiosInstance.get("/folders").catch(() => null);
+        folders = clean(retry?.data) ?? folders;
+      }
+      if (folders) {
+        persist(folders);
+        set({ folders, hydrated: true });
+        return;
+      }
+    } catch {
+      /* offline — keep the local cache */
+    }
+    set({ hydrated: true });
+  },
 
   addFolder: (name, color) => {
     const folder: ChatFolder = {
@@ -75,6 +114,26 @@ export const useFolderStore = create<FolderState>((set, get) => ({
     const folders = [...get().folders, folder];
     persist(folders);
     set({ folders, expanded: { ...get().expanded, [folder.id]: true } });
+    // Reconcile the temp id with the server id when online.
+    axiosInstance
+      .post("/folders", { name: folder.name, color: folder.color })
+      .then((res) => {
+        const server = clean([res.data])?.[0];
+        if (!server) return;
+        const next = get().folders.map((f) =>
+          f.id === folder.id ? server : f
+        );
+        persist(next);
+        set((s) => {
+          const expanded = { ...s.expanded };
+          if (expanded[folder.id] !== undefined) {
+            expanded[server.id] = expanded[folder.id];
+            delete expanded[folder.id];
+          }
+          return { folders: next, expanded };
+        });
+      })
+      .catch(() => {});
   },
 
   renameFolder: (id, name, color) => {
@@ -83,6 +142,7 @@ export const useFolderStore = create<FolderState>((set, get) => ({
     );
     persist(folders);
     set({ folders });
+    axiosInstance.patch(`/folders/${id}`, { name, color }).catch(() => {});
   },
 
   deleteFolder: (id) => {
@@ -91,6 +151,7 @@ export const useFolderStore = create<FolderState>((set, get) => ({
     const expanded = { ...get().expanded };
     delete expanded[id];
     set({ folders, expanded });
+    axiosInstance.delete(`/folders/${id}`).catch(() => {});
   },
 
   toggleMember: (folderId, chatId) => {
@@ -104,6 +165,7 @@ export const useFolderStore = create<FolderState>((set, get) => ({
     });
     persist(folders);
     set({ folders });
+    axiosInstance.put(`/folders/${folderId}/members`, { chatId }).catch(() => {});
   },
 
   folderOf: (chatId) => get().folders.find((f) => f.memberIds.includes(chatId)),

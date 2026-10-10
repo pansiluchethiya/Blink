@@ -3,6 +3,7 @@ import { generateToken } from "../lib/utils.js";
 import { prisma, toResponse } from "../lib/prisma.js";
 import NotificationService from "../services/notification.service.js";
 import bcrypt from "bcryptjs";
+import multer from "multer";
 import cloudinary from "../lib/cloudinary.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/AppError.js";
@@ -154,4 +155,37 @@ export const updateProfile = catchAsync(async (req: AuthRequest, res: Response, 
 export const checkAuth = (req: AuthRequest, res: Response) => {
   res.status(200).json(req.user);
 };
+
+// Dedicated photo-avatar upload: multipart file -> Cloudinary -> profilePic.
+// Keeps large base64 payloads out of the JSON update-profile path.
+export const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 }, // 8MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new AppError("Only image files are allowed", 400) as any);
+  },
+}).single("avatar");
+
+export const uploadAvatar = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const file = (req as any).file as { buffer: Buffer; mimetype: string } | undefined;
+  if (!file) return next(new AppError("No image file provided", 400));
+
+  let secureUrl: string;
+  try {
+    const dataUri = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+    const uploadResponse = await cloudinary.uploader.upload(dataUri, { folder: "blink-avatars" });
+    secureUrl = uploadResponse.secure_url;
+  } catch (error) {
+    console.error("Cloudinary avatar upload error:", error);
+    return next(new AppError("Failed to upload image", 500));
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: getUserId(req) },
+    data: { profilePic: secureUrl },
+  });
+  const { password: _pw, ...safe } = updated as any;
+  res.status(200).json(toResponse(safe as any));
+});
 

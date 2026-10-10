@@ -366,10 +366,8 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                     return (
                       <div key={msg._id} className="space-y-2">
                         {showDate && (
-                          <div className="flex items-center justify-center my-6">
-                            <span className="px-3 py-1 rounded-full bg-base-200/60 border border-base-300 text-[10px] font-bold text-base-content/60 tracking-wider">
-                              {formatDateLabel(msg.createdAt)}
-                            </span>
+                          <div className="date-separator">
+                            <span>{formatDateLabel(msg.createdAt)}</span>
                           </div>
                         )}
 
@@ -397,13 +395,13 @@ const WorkspaceChat = ({ onBurgerClick }) => {
                               />
                             )}
 
-                            {/* Message Bubble */}
+                            {/* Message Bubble — flat, borderless, v3 */}
                             {!(msg.file?.kind === "sticker" && !msg.text) && (
-                            <div 
-                              className={`p-3.5 rounded-2xl border text-sm font-medium shadow-sm transition duration-200 leading-relaxed ${
-                                isOwn 
-                                  ? "bg-primary border-primary text-primary-content rounded-tr-none" 
-                                  : "bg-base-200 border-base-300 text-base-content rounded-tl-none"
+                            <div
+                              className={`px-4 py-2.5 rounded-[20px] text-[15px] leading-[1.5] font-medium ${
+                                isOwn
+                                  ? "bg-primary text-primary-content rounded-br-md"
+                                  : "bg-base-200 text-base-content rounded-bl-md"
                               }`}
                             >
                               {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
@@ -487,7 +485,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
             {/* Typing status bar */}
             {channelTypingUsers.length > 0 && (
-              <div className="px-4 py-1.5 bg-base-300/60 border-t border-base-300 text-xs text-base-content/60 font-medium">
+              <div className="px-4 py-1.5 bg-base-200 border-t border-base-200 text-xs text-base-content/60 font-medium">
                 <span className="text-primary font-bold animate-pulse">
                   {getTypingUsersText()}
                 </span>
@@ -495,7 +493,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
             )}
 
             {/* Input Bar */}
-            <form onSubmit={handleSendMessage} className="p-3 bg-base-200 border-t border-base-300 flex flex-col gap-2.5 z-10">
+            <form onSubmit={handleSendMessage} className="p-3 bg-base-100 border-t border-base-200 flex flex-col gap-2.5 z-10">
               {/* Previews if any */}
               {imagePreview && (
                 <div className="flex items-center gap-3 bg-base-300 p-2 rounded-xl border border-base-300 w-fit">
@@ -1052,7 +1050,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
       {/* Main Channel Layout */}
       <div className="flex-grow flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="h-16 px-4 border-b border-base-300 bg-base-200 flex items-center justify-between flex-shrink-0 z-20">
+        <div className="h-16 px-4 border-b border-base-200 bg-base-100 flex items-center justify-between flex-shrink-0 z-20">
           <div className="flex items-center gap-2">
             {/* Mobile Burger Menu Button */}
             <button
