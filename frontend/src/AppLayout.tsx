@@ -47,7 +47,10 @@ const AppLayout = () => {
     }
   }, [username, users, isUsersLoading, setSelectedUser, handleError, navigate]);
 
-  const isFullScreenPage = ["/login", "/signup", "/settings", "/profile"].includes(location.pathname);
+  // Full pages render without the chat chrome. Share/protocol/notes are
+  // real routes (not chat panels) — mounting them fullscreen fixes them
+  // never rendering, since the 3-pane branch has no <Outlet/>.
+  const isFullScreenPage = ["/login", "/signup", "/settings", "/profile", "/share", "/protocol", "/notes"].includes(location.pathname);
 
   if (isFullScreenPage) {
     return <Outlet />;
@@ -64,7 +67,7 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-base-100 text-base-content relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-base-200 text-base-content relative md:gap-3 md:p-3">
       {/* 1. Sidebar Rail (Desktop Only) - Slim vertical nav */}
       <div className="hidden md:block">
         <SidebarRail activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -72,8 +75,8 @@ const AppLayout = () => {
       
       {/* 2. Side Column (Conversations, Users, Groups, etc.) */}
       <div className={`
-        w-full md:w-[380px] flex-shrink-0 border-r border-border flex flex-col h-full 
-        glass transition-all duration-300 ease-in-out
+        w-full md:w-[380px] flex-shrink-0 flex flex-col h-full
+        bg-base-100 md:rounded-[28px] transition-all duration-300 ease-in-out
         ${(selectedUser || selectedWorkspace) ? "hidden md:flex" : "flex"} 
         ${activeTab !== 'chats' ? 'pb-16 md:pb-0' : 'pb-16 md:pb-0'}
       `}>
@@ -82,8 +85,8 @@ const AppLayout = () => {
       
       {/* 3. Main Content Area */}
       <main className={`
-        flex-1 flex flex-col h-full relative overflow-hidden 
-        glass transition-all duration-300
+        flex-1 flex flex-col h-full relative overflow-hidden
+        bg-base-100 md:rounded-[28px] transition-all duration-300
         ${(selectedUser || selectedWorkspace) ? "flex" : "hidden md:flex"}
       `}>
         {selectedWorkspace ? (
