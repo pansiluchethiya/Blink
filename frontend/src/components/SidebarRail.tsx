@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import Avatar from "./Avatar";
@@ -9,17 +9,16 @@ import {
   Plus,
   Users,
   Bell,
-  MessageSquare
+  MessageSquare,
+  NotebookPen,
+  Zap,
 } from "lucide-react";
 
 const SidebarRail = ({ activeTab = "chats", setActiveTab = () => {}, forceShow = false }) => {
   const { logout, authUser } = useAuthStore();
-  const {
-    workspaces,
-    selectedWorkspace,
-    setSelectedWorkspace,
-    createWorkspace
-  } = useChatStore();
+  const { setSelectedWorkspace, createWorkspace } = useChatStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newServerName, setNewServerName] = useState("");
@@ -45,13 +44,10 @@ const SidebarRail = ({ activeTab = "chats", setActiveTab = () => {}, forceShow =
     setShowCreateModal(false);
   };
 
-  const getWorkspaceInitials = (name) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
+  const goChats = () => {
+    setSelectedWorkspace(null);
+    setActiveTab("chats");
+    navigate("/");
   };
 
   useEffect(() => {
@@ -73,149 +69,143 @@ const SidebarRail = ({ activeTab = "chats", setActiveTab = () => {}, forceShow =
     };
   }, [setActiveTab, setSelectedWorkspace]);
 
+  const onHome = location.pathname === "/";
+  const items = [
+    {
+      key: "chats",
+      label: "Chats",
+      icon: MessageSquare,
+      active: onHome && activeTab === "chats",
+      onClick: goChats,
+    },
+    {
+      key: "users",
+      label: "Friends",
+      icon: Users,
+      active: onHome && activeTab === "users",
+      onClick: () => {
+        setSelectedWorkspace(null);
+        setActiveTab("users");
+        navigate("/");
+      },
+    },
+    {
+      key: "notes",
+      label: "Notes",
+      icon: NotebookPen,
+      active: location.pathname === "/notes",
+      onClick: () => navigate("/notes"),
+    },
+    {
+      key: "notifications",
+      label: "Notifications",
+      icon: Bell,
+      active: onHome && activeTab === "notifications",
+      onClick: () => {
+        setSelectedWorkspace(null);
+        setActiveTab("notifications");
+        navigate("/");
+      },
+    },
+  ];
+
   return (
     <>
-      <aside data-context="sidebar" className={`${forceShow ? "flex" : "hidden lg:flex"} flex-col items-center py-5 w-16 h-full bg-base-200 border-r border-base-300 justify-between flex-shrink-0 z-30 select-none transition-colors duration-200`}>
-        <div className="flex flex-col items-center gap-4 w-full">
-          {/* Chats / Home */}
-<button
-             onClick={() => {
-               setSelectedWorkspace(null);
-               setActiveTab("chats");
-             }}
-             className="relative group flex items-center justify-center w-full focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-xl"
-             aria-label="Direct Messages"
-             aria-current={activeTab === "chats" && selectedWorkspace === null}
-           >
-             <span
-               className={`absolute left-0 w-1 bg-primary rounded-r-md transition-all duration-300 ${
-                 activeTab === "chats" && selectedWorkspace === null
-                   ? "h-8"
-                   : "h-0 group-hover:h-3"
-               }`}
-             />
-             <div
-               className={`size-12 flex items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden ${
-                 activeTab === "chats" && selectedWorkspace === null
-                   ? "rounded-xl bg-primary text-primary-content shadow-lg"
-                   : "rounded-2xl bg-base-300 text-base-content/50 hover:rounded-xl hover:text-base-content"
-               }`}
-             >
-               <MessageSquare size={22} fill={activeTab === "chats" ? "currentColor" : "none"} aria-hidden="true" />
-             </div>
-             <span className="sr-only">Direct Messages</span>
-           </button>
+      <aside data-context="sidebar" className={`${forceShow ? "flex" : "hidden lg:flex"} flex-col items-center py-5 w-[80px] h-full bg-base-100 md:rounded-[28px] justify-between flex-shrink-0 z-30 select-none transition-colors duration-200`}>
+        <div className="flex flex-col items-center gap-2.5 w-full">
+          {/* Logo */}
+          <button
+            onClick={goChats}
+            className="size-11 rounded-full bg-base-content text-base-100 flex items-center justify-center hover:scale-105 transition-transform mb-2"
+            aria-label="Blink home"
+            title="Blink"
+          >
+            <Zap size={20} className="fill-current" />
+          </button>
 
-          {/* Friends Tab */}
-<button
-             onClick={() => {
-               setSelectedWorkspace(null);
-               setActiveTab("users");
-             }}
-             className="relative group flex items-center justify-center w-full focus:outline-none rounded-xl"
-             aria-label="Friends"
-             aria-current={activeTab === "users"}
-           >
-             <span
-               className={`absolute left-0 w-1 bg-primary rounded-r-md transition-all duration-300 ${
-                 activeTab === "users"
-                   ? "h-8"
-                   : "h-0 group-hover:h-3"
-               }`}
-             />
-             <div
-               className={`size-12 flex items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden ${
-                 activeTab === "users"
-                   ? "rounded-xl bg-primary text-primary-content shadow-lg"
-                   : "rounded-2xl bg-base-300 text-base-content/50 hover:rounded-xl hover:text-base-content"
-               }`}
-             >
-               <Users size={22} fill={activeTab === "users" ? "currentColor" : "none"} aria-hidden="true" />
-             </div>
-             <span className="sr-only">Friends</span>
-           </button>
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.key}
+                onClick={item.onClick}
+                className="relative group flex items-center justify-center w-full focus:outline-none focus-visible rounded-2xl"
+                aria-label={item.label}
+                aria-current={item.active}
+                title={item.label}
+              >
+                <div
+                  className={`size-12 flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                    item.active
+                      ? "rounded-full bg-base-content text-base-100 shadow-md"
+                      : "rounded-2xl text-base-content/40 hover:bg-base-200 hover:text-base-content"
+                  }`}
+                >
+                  <Icon size={22} fill={item.active ? "currentColor" : "none"} aria-hidden="true" />
+                </div>
+                <span className="absolute left-[70px] px-3 py-1.5 bg-base-100 text-base-content text-xs font-semibold rounded-lg shadow-xl border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
 
-          {/* Notifications Tab */}
-<button
-             onClick={() => {
-               setSelectedWorkspace(null);
-               setActiveTab("notifications");
-             }}
-             className="relative group flex items-center justify-center w-full focus:outline-none rounded-xl"
-             aria-label="Notifications"
-             aria-current={activeTab === "notifications"}
-           >
-             <span
-               className={`absolute left-0 w-1 bg-primary rounded-r-md transition-all duration-300 ${
-                 activeTab === "notifications"
-                   ? "h-8"
-                   : "h-0 group-hover:h-3"
-               }`}
-             />
-             <div
-               className={`size-12 flex items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden ${
-                 activeTab === "notifications"
-                   ? "rounded-xl bg-primary text-primary-content shadow-lg"
-                   : "rounded-2xl bg-base-300 text-base-content/50 hover:rounded-xl hover:text-base-content"
-               }`}
-             >
-               <Bell size={22} fill={activeTab === "notifications" ? "currentColor" : "none"} aria-hidden="true" />
-             </div>
-             <span className="sr-only">Notifications</span>
-           </button>
+          <div className="w-8 h-[2px] bg-base-300 rounded-full my-1" />
 
-          <div className="w-8 h-[2px] bg-base-300 rounded-full" />
-
-          <div className="flex flex-col gap-3 w-full items-center">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="relative group flex items-center justify-center w-full focus:outline-none"
-            >
-              <div className="size-12 border-2 border-dashed border-base-300 hover:border-primary rounded-2xl hover:rounded-xl flex items-center justify-center text-base-content/50 hover:text-primary-content hover:bg-primary transition-all duration-300 cursor-pointer">
-                <Plus className="w-5 h-5" />
-              </div>
-              <span className="absolute left-[70px] px-3 py-1.5 bg-base-100 text-base-content text-xs font-semibold rounded-lg shadow-xl border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">
-                Create a Group
-              </span>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="relative group flex items-center justify-center w-full focus:outline-none"
+            aria-label="Create a Group"
+            title="Create a Group"
+          >
+            <div className="size-12 border-2 border-dashed border-base-300 hover:border-primary rounded-2xl flex items-center justify-center text-base-content/50 hover:text-primary transition-all duration-200 cursor-pointer">
+              <Plus className="w-5 h-5" />
+            </div>
+            <span className="absolute left-[70px] px-3 py-1.5 bg-base-100 text-base-content text-xs font-semibold rounded-lg shadow-xl border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">
+              Create a Group
+            </span>
+          </button>
         </div>
 
-        <div className="flex flex-col items-center gap-4 w-full px-2 mt-auto">
-          {authUser && (
-            <Link
-              to="/profile"
-              className="relative rounded-full ring-2 ring-base-300 hover:ring-primary transition-all duration-200 overflow-hidden size-10 flex-shrink-0"
-              title="View Profile"
-            >
-              <Avatar user={authUser} className="size-10" />
-            </Link>
-          )}
-
+        <div className="flex flex-col items-center gap-2.5 w-full px-2 mt-auto">
           <Link
             to="/settings"
-            className="relative size-10 flex items-center justify-center rounded-xl text-base-content/50 hover:text-base-content hover:bg-base-300 transition-all duration-200 group"
+            className={`relative size-12 flex items-center justify-center rounded-2xl transition-all duration-200 group ${
+              location.pathname === "/settings"
+                ? "bg-base-content text-base-100 rounded-full"
+                : "text-base-content/40 hover:text-base-content hover:bg-base-200"
+            }`}
             title="Settings"
           >
-            <Settings className="w-5 h-5" />
-            <span className="absolute left-[70px] bg-base-100 text-base-content text-xs rounded py-1 px-2 border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">Settings</span>
+            <Settings className="w-[22px] h-[22px]" />
+            <span className="absolute left-[62px] bg-base-100 text-base-content text-xs rounded py-1 px-2 border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">Settings</span>
           </Link>
 
           <button
             onClick={logout}
-            className="relative size-10 flex items-center justify-center rounded-xl text-error/80 hover:text-error hover:bg-error/10 transition-all duration-200 group"
+            className="relative size-12 flex items-center justify-center rounded-2xl text-base-content/40 hover:text-error hover:bg-error/10 transition-all duration-200 group"
             title="Logout"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="absolute left-[70px] bg-base-100 text-base-content text-xs rounded py-1 px-2 border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">Logout</span>
+            <LogOut className="w-[22px] h-[22px]" />
+            <span className="absolute left-[62px] bg-base-100 text-base-content text-xs rounded py-1 px-2 border border-base-300 opacity-0 scale-95 origin-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 whitespace-nowrap z-50">Logout</span>
           </button>
+
+          {authUser && (
+            <Link
+              to="/profile"
+              className="relative rounded-full ring-2 ring-base-300 hover:ring-primary transition-all duration-200 overflow-hidden size-11 flex-shrink-0 mt-1"
+              title="View Profile"
+            >
+              <Avatar user={authUser} className="size-11" />
+            </Link>
+          )}
         </div>
       </aside>
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-base-100 border border-base-300 rounded-2xl shadow-2xl p-6 relative animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md bg-base-100 border border-base-300 rounded-3xl shadow-2xl p-6 relative animate-in zoom-in-95 duration-200"
             role="dialog"
             aria-modal="true"
           >
@@ -237,7 +227,7 @@ const SidebarRail = ({ activeTab = "chats", setActiveTab = () => {}, forceShow =
                   placeholder="e.g. Frontend Pioneers"
                   value={newServerName}
                   onChange={(e) => setNewServerName(e.target.value)}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full rounded-2xl"
                   autoFocus
                 />
               </div>
@@ -274,13 +264,13 @@ const SidebarRail = ({ activeTab = "chats", setActiveTab = () => {}, forceShow =
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="btn btn-ghost"
+                  className="btn btn-ghost rounded-full"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary rounded-full"
                 >
                   Create Group
                 </button>

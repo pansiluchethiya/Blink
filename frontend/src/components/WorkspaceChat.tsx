@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ChatThemePicker from "./ChatThemePicker";
+import { chatAccentClass } from "../lib/chatThemes";
 import GifPicker from "./GifPicker";
 import Avatar from "./Avatar";
 
@@ -1046,8 +1047,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
 
   return (
     <div
-      data-theme={selectedChannelId ? getChatTheme(`channel:${selectedChannelId}`) ?? undefined : undefined}
-      className="flex-1 flex h-full overflow-hidden bg-base-100 select-text"
+      className={`flex-1 flex h-full overflow-hidden bg-base-100 select-text ${selectedChannelId ? chatAccentClass(getChatTheme(`channel:${selectedChannelId}`)) : ""}`}
     >
       {/* Main Channel Layout */}
       <div className="flex-grow flex flex-col h-full overflow-hidden">

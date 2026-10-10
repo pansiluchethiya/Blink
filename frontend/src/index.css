@@ -155,3 +155,12 @@
   width: 16px;
   height: 16px;
 }
+
+/* ===== v3 per-chat accents (scoped --p/--pc overrides, daisyUI v4) ===== */
+.chat-accent-coral { --p: 70.78% 0.1845 28.04; --pc: 100% 0 0; }
+.chat-accent-sky { --p: 68.47% 0.1479 237.32; --pc: 100% 0 0; }
+.chat-accent-violet { --p: 60.56% 0.2189 292.72; --pc: 100% 0 0; }
+.chat-accent-emerald { --p: 69.59% 0.1491 162.48; --pc: 15% 0.02 162.48; }
+.chat-accent-amber { --p: 76.86% 0.1647 70.08; --pc: 25% 0.05 70.08; }
+.chat-accent-pink { --p: 65.59% 0.2118 354.31; --pc: 100% 0 0; }
+.chat-accent-slate { --p: 55.44% 0.0407 257.42; --pc: 100% 0 0; }

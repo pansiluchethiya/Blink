@@ -9,6 +9,7 @@ import Avatar from "./Avatar";
 import UserProfilePanel from "./UserProfilePanel";
 import MessageActions from "./MessageActions";
 import ChatActionDrawer from "./ChatActionDrawer";
+import { chatAccentClass } from "../lib/chatThemes";
 
 const isSameDay = (d1, d2) => {
   const a = new Date(d1);
@@ -171,8 +172,7 @@ const ChatContainer = () => {
   if (isMessagesLoading && messages.length === 0) {
     return (
       <div
-        data-theme={selectedUser ? getChatTheme(`dm:${selectedUser._id}`) ?? undefined : undefined}
-        className="flex-1 flex flex-col h-full bg-base-100"
+        className={`flex-1 flex flex-col h-full bg-base-100 ${selectedUser ? chatAccentClass(getChatTheme(`dm:${selectedUser._id}`)) : ""}`}
       >
         <ChatHeader 
           onAvatarClick={() => setShowProfile(true)} 
@@ -191,8 +191,7 @@ const ChatContainer = () => {
 
   return (
     <div
-      data-theme={selectedUser ? getChatTheme(`dm:${selectedUser._id}`) ?? undefined : undefined}
-      className="flex-1 flex flex-col h-full bg-base-100 overflow-hidden relative transition-colors duration-200"
+      className={`flex-1 flex flex-col h-full bg-base-100 overflow-hidden relative transition-colors duration-200 ${selectedUser ? chatAccentClass(getChatTheme(`dm:${selectedUser._id}`)) : ""}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

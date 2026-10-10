@@ -1,6 +1,6 @@
 import React from "react";
 import { Check } from "lucide-react";
-import { CHAT_THEMES, MONO_THEMES, EXPRESSIVE_THEMES, type ChatTheme } from "../lib/chatThemes";
+import { CHAT_ACCENTS, DEFAULT_ACCENT, type ChatAccent } from "../lib/chatThemes";
 import Avatar from "./Avatar";
 
 interface ChatThemePickerProps {
@@ -10,16 +10,15 @@ interface ChatThemePickerProps {
   onSelect: (themeName: string | null) => void;
 }
 
-/** Live miniature mock of a conversation, rendered inside the candidate theme. */
-const ThemePreview: React.FC<{ theme: ChatTheme; peerName: string; peerSeed: string; selected: boolean }> = ({
-  theme,
+/** Live miniature mock of a conversation tinted with the candidate accent. */
+const AccentPreview: React.FC<{ accent: ChatAccent; peerName: string; peerSeed: string; selected: boolean }> = ({
+  accent,
   peerName,
   peerSeed,
   selected,
 }) => (
   <div
-    data-theme={theme.name}
-    className={`rounded-2xl overflow-hidden border-2 transition-all bg-base-100 ${
+    className={`chat-accent-${accent.name} rounded-2xl overflow-hidden border-2 transition-all bg-base-100 ${
       selected ? "border-primary shadow-lg" : "border-base-300 hover:border-base-content/30"
     }`}
   >
@@ -47,53 +46,45 @@ const ThemePreview: React.FC<{ theme: ChatTheme; peerName: string; peerSeed: str
         <span className="bg-primary text-primary-content rounded-full px-2 py-0.5 text-[11px] font-bold">Send</span>
       </div>
     </div>
-    <p className="text-center text-xs font-bold text-base-content pb-2">{theme.label}</p>
+    <p className="text-center text-xs font-bold text-base-content pb-2">{accent.label}</p>
   </div>
 );
 
-const ChatThemePicker: React.FC<ChatThemePickerProps> = ({ peerName, peerSeed, current, onSelect }) => (
-  <div className="space-y-5">
-    <button
-      type="button"
-      onClick={() => onSelect(null)}
-      className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${
-        !current ? "border-primary bg-primary/5" : "border-base-300 hover:border-base-content/30"
-      }`}
-    >
-      <div className="flex -space-x-1.5">
-        <span className="size-7 rounded-full bg-base-100 border border-base-300" />
-        <span className="size-7 rounded-full bg-black border border-base-300" />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm font-bold text-base-content">Default</p>
-        <p className="text-xs text-base-content/50">Follow your app theme</p>
-      </div>
-      {!current && <Check size={18} className="text-primary" />}
-    </button>
+const ChatThemePicker: React.FC<ChatThemePickerProps> = ({ peerName, peerSeed, current, onSelect }) => {
+  const effective = current ?? DEFAULT_ACCENT;
+  return (
+    <div className="space-y-5">
+      <button
+        type="button"
+        onClick={() => onSelect(null)}
+        className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${
+          !current ? "border-primary bg-primary/5" : "border-base-300 hover:border-base-content/30"
+        }`}
+      >
+        <div className="flex -space-x-1.5">
+          <span className="size-7 rounded-full bg-base-100 border border-base-300" />
+          <span className="size-7 rounded-full bg-black border border-base-300" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-base-content">Default</p>
+          <p className="text-xs text-base-content/50">Coral, follows your app theme</p>
+        </div>
+        {!current && <Check size={18} className="text-primary" />}
+      </button>
 
-    <div>
-      <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2 px-1">Mono</p>
-      <div className="grid grid-cols-2 gap-2.5">
-        {MONO_THEMES.map((t) => (
-          <button key={t.name} type="button" onClick={() => onSelect(t.name)} className="text-left">
-            <ThemePreview theme={t} peerName={peerName} peerSeed={peerSeed} selected={current === t.name} />
-          </button>
-        ))}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2 px-1">Accent</p>
+        <div className="grid grid-cols-2 gap-2.5">
+          {CHAT_ACCENTS.filter((a) => a.name !== DEFAULT_ACCENT).map((a) => (
+            <button key={a.name} type="button" onClick={() => onSelect(a.name)} className="text-left">
+              <AccentPreview accent={a} peerName={peerName} peerSeed={peerSeed} selected={effective === a.name} />
+            </button>
+          ))}
+        </div>
       </div>
     </div>
-
-    <div>
-      <p className="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2 px-1">Expressive</p>
-      <div className="grid grid-cols-2 gap-2.5">
-        {EXPRESSIVE_THEMES.map((t) => (
-          <button key={t.name} type="button" onClick={() => onSelect(t.name)} className="text-left">
-            <ThemePreview theme={t} peerName={peerName} peerSeed={peerSeed} selected={current === t.name} />
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default ChatThemePicker;
-export { CHAT_THEMES };
+export { CHAT_ACCENTS as CHAT_THEMES };
