@@ -1,13 +1,13 @@
 import { create } from "zustand";
 
 /**
- * Global app theme. The app shell stays monochrome by design:
- * - "blink-light" — white/gray surfaces, black primary
- * - "blink-dark"  — near-black surfaces, white primary
+ * Global app theme (v3). The app shell follows the reference design:
+ * - "blink-light" — white surfaces on a soft blue-gray backdrop, coral primary
+ * - "blink-dark"  — true-black OLED surfaces, coral primary
  * - "system"      — follows prefers-color-scheme
  *
- * Expressive color lives in per-chat themes (see chatTheme.ts), which are
- * scoped to the chat container via data-theme and don't touch this store.
+ * Per-chat accent overrides live in chatThemes.ts and scope to the chat
+ * container via .chat-accent-* classes; they don't touch this store.
  */
 
 export const BLINK_LIGHT = "blink-light";

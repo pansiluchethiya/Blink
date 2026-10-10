@@ -87,11 +87,20 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response): Promi
     });
 
     const userMap = new Map<string, any>();
+
+    // Unread DM counts per sender — one indexed aggregate, no per-user queries.
+    const unread = await prisma.message.groupBy({
+      by: ["senderId"],
+      where: { receiverId: loggedInUserId, isRead: false, isExpired: false, isDeleted: false },
+      _count: { id: true },
+    });
+    const unreadMap = new Map(unread.map((u) => [u.senderId, u._count.id]));
+
     for (const msg of recent as any[]) {
       if (!msg.sender || !msg.receiver) continue;
       const other = msg.sender.id === loggedInUserId ? msg.receiver : msg.sender;
       if (other && !userMap.has(other.id)) {
-        userMap.set(other.id, { ...toResponse(other), lastMessage: toResponse(msg) });
+        userMap.set(other.id, { ...toResponse(other), lastMessage: toResponse(msg), unreadCount: unreadMap.get(other.id) ?? 0 });
       }
     }
 
@@ -103,7 +112,7 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response): Promi
       orderBy: { fullName: "asc" },
     });
     for (const u of others) {
-      if (!userMap.has(u.id)) userMap.set(u.id, { ...toResponse(u as any), lastMessage: null });
+      if (!userMap.has(u.id)) userMap.set(u.id, { ...toResponse(u as any), lastMessage: null, unreadCount: 0 });
     }
 
     const users = Array.from(userMap.values()).sort((a: any, b: any) => {

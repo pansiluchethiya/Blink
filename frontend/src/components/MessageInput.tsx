@@ -251,7 +251,7 @@ const MessageInput = () => {
   }
 
   return (
-    <div className="w-full px-4 py-4 bg-base-100 border-t border-base-300 flex-shrink-0 z-20">
+    <div className="w-full px-4 py-4 bg-base-100 border-t border-base-200 flex-shrink-0 z-20">
       <div className="max-w-[800px] mx-auto relative">
 
         <ReplyPreview />

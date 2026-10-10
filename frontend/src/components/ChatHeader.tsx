@@ -1,8 +1,7 @@
 import { X, Search, Phone, Video, ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Link } from "react-router-dom";
 import { useChatStore } from "../store/useChatStore";
-import { getUserHandle } from "../lib/utils";
+import toast from "react-hot-toast";
 import Avatar from "./Avatar";
 
 const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick, onMoreClick }) => {
@@ -14,8 +13,10 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
 
   if (!selectedUser) return <div className="h-16 flex-shrink-0" />;
 
+  const notAvailable = () => toast("Voice and video calls aren't available yet", { icon: "📵" });
+
   return (
-    <div className="px-4 py-3 border-b border-base-300 bg-base-100/80 backdrop-blur flex-shrink-0 z-20 select-none">
+    <div className="px-4 py-3 border-b border-base-200 bg-base-100 flex-shrink-0 z-20 select-none">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {/* Back button — mobile only */}
@@ -33,7 +34,7 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
               <Avatar user={selectedUser} className="size-10" />
             </div>
             {isOnline && (
-              <span className="absolute bottom-0 right-0 size-3 bg-success rounded-full border-2 border-base-100" />
+              <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-base-100" />
             )}
           </div>
 
@@ -41,31 +42,33 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
           <div className="flex-1 min-w-0 text-left cursor-pointer" onClick={onAvatarClick}>
             <h3 className="font-bold text-[17px] text-base-content leading-tight truncate flex items-center gap-1.5">
               {selectedUser.fullName}
-              <Link
-                to={`/u/${getUserHandle(selectedUser).replace("@", "")}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-[12px] text-primary hover:underline font-bold opacity-85"
-              >
-                {getUserHandle(selectedUser)}
-              </Link>
+              <span
+                className={`size-2 rounded-full flex-shrink-0 ${isOnline ? "bg-green-500" : "bg-base-300"}`}
+                title={isOnline ? "Online" : "Offline"}
+              />
             </h3>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={`text-[12px] font-medium ${isOnline ? "text-success" : "text-base-content/40"}`}>
-                {isOnline ? "Active now" : "Offline"}
-              </span>
-              {status?.statusMessage && (
-                <span className="text-[12px] text-base-content/50 truncate hidden sm:inline">• "{status.statusMessage}"</span>
-              )}
-            </div>
+            {status?.statusMessage && (
+              <p className="text-[12px] text-base-content/50 truncate mt-0.5 hidden sm:block">
+                "{status.statusMessage}"
+              </p>
+            )}
           </div>
         </div>
 
         {/* Action icons */}
         <div className="flex items-center gap-1">
-          <button className="p-2.5 hover:bg-base-200 rounded-full transition-all text-primary hover:scale-105">
+          <button
+            onClick={notAvailable}
+            className="p-2.5 hover:bg-base-200 rounded-full transition-all text-primary hover:scale-105"
+            title="Voice call"
+          >
             <Phone size={20} />
           </button>
-          <button className="p-2.5 hover:bg-base-200 rounded-full transition-all text-primary hover:scale-105">
+          <button
+            onClick={notAvailable}
+            className="p-2.5 hover:bg-base-200 rounded-full transition-all text-primary hover:scale-105"
+            title="Video call"
+          >
             <Video size={20} />
           </button>
 
@@ -74,6 +77,7 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
           <button
             onClick={onSearchClick}
             className="p-2.5 text-base-content/50 hover:text-base-content hover:bg-base-200 rounded-full transition-all"
+            title="Search in conversation"
           >
             <Search size={20} />
           </button>
@@ -81,6 +85,7 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
           <button
             onClick={onMoreClick}
             className="p-2.5 text-base-content/50 hover:text-base-content hover:bg-base-200 rounded-full transition-all"
+            title="More"
           >
             <MoreHorizontal size={20} />
           </button>
@@ -88,6 +93,7 @@ const ChatHeader = ({ onSearchClick, onPinnedClick, onBurgerClick, onAvatarClick
           <button
             onClick={() => setSelectedUser(null)}
             className="p-2.5 text-base-content/50 hover:text-base-content hover:bg-base-200 rounded-full transition-all hidden lg:inline-flex"
+            title="Close conversation"
           >
             <X size={20} />
           </button>

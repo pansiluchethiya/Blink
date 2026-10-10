@@ -4,6 +4,7 @@ import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import MessageItem from "./MessageItem";
+import MessageSearch from "./MessageSearch";
 import MessageVirtualizer from "./MessageVirtualizer";
 import Avatar from "./Avatar";
 import UserProfilePanel from "./UserProfilePanel";
@@ -53,6 +54,7 @@ const ChatContainer = () => {
   } = useChatStore();
   const [showProfile, setShowProfile] = useState(false);
   const [showActionDrawer, setShowActionDrawer] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [activeMessageMenu, setActiveMessageMenu] = useState(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -165,6 +167,7 @@ const ChatContainer = () => {
   useEffect(() => {
     if (selectedUser?._id) {
       getMessages(selectedUser._id);
+      setShowSearch(false);
     }
   }, [selectedUser?._id, getMessages]);
 
@@ -177,6 +180,7 @@ const ChatContainer = () => {
         <ChatHeader 
           onAvatarClick={() => setShowProfile(true)} 
           onMoreClick={() => setShowActionDrawer(true)}
+          onSearchClick={() => setShowSearch((v) => !v)}
         />
         <MessageSkeleton />
         <MessageInput />
@@ -199,7 +203,12 @@ const ChatContainer = () => {
       <ChatHeader 
         onAvatarClick={() => setShowProfile(true)} 
         onMoreClick={() => setShowActionDrawer(true)}
+        onSearchClick={() => setShowSearch((v) => !v)}
       />
+
+      {showSearch && selectedUser && (
+        <MessageSearch userId={selectedUser._id} onClose={() => setShowSearch(false)} />
+      )}
 
       <div className="flex-1 overflow-hidden chat-bg-pattern relative">
         {/* Slim refresh shimmer while cached messages revalidate (SWR). */}

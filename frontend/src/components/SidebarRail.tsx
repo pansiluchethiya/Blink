@@ -129,7 +129,7 @@ const SidebarRail = ({ activeTab = "chats", setActiveTab = () => {}, forceShow =
               <button
                 key={item.key}
                 onClick={item.onClick}
-                className="relative group flex items-center justify-center w-full focus:outline-none focus-visible rounded-2xl"
+                className="relative group flex items-center justify-center w-full focus:outline-none rounded-2xl"
                 aria-label={item.label}
                 aria-current={item.active}
                 title={item.label}

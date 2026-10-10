@@ -1,7 +1,6 @@
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { formatMessageTime, getUserHandle } from "../lib/utils";
-import { Link } from "react-router-dom";
 
 import { Paperclip, Check, CheckCheck, MoreVertical, Pin, ChevronDown } from "lucide-react";
 import MessageReactions from "./MessageReactions";
@@ -63,15 +62,15 @@ const MessageItem = ({
   const showAvatar = !isSelf && !isNextSameSender;
   const showNameHeader = !isSelf && (!isPrevSameSender || message.isDeleted);
   const bubbleRoundness = isSelf
-    ? "rounded-2xl rounded-tr-sm"
-    : "rounded-2xl rounded-tl-sm";
+    ? "rounded-[20px] rounded-br-md"
+    : "rounded-[20px] rounded-bl-md";
 
-  const commonBubbleClasses = `relative flex flex-col select-text px-4 py-2.5 shadow-sm transition-all no-callout group/bubble ${bubbleRoundness} message-bubble ${
+  const commonBubbleClasses = `relative flex flex-col select-text px-4 py-2.5 transition-all no-callout group/bubble max-w-[82%] sm:max-w-[68%] ${bubbleRoundness} message-bubble ${
     message.isDeleted
       ? "bg-base-200/50 text-base-content/40 italic font-normal border border-base-300"
       : isSelf
-        ? "message-bubble-self chat-bubble chat-bubble-primary bg-primary text-primary-content border border-primary"
-        : "message-bubble-other bg-base-200 text-base-content border border-base-300"
+        ? "message-bubble-self chat-bubble chat-bubble-primary bg-primary text-primary-content"
+        : "message-bubble-other bg-base-200 text-base-content"
   } hover:cursor-pointer`;
 
   const marginBottom = isNextSameSender ? "mb-1" : "mb-4";
@@ -161,22 +160,18 @@ const MessageContent = ({
   const stickerSrc = message.image || (isSticker ? message.file?.url : undefined);
   const stickerAlt = message.file?.alt || "Sticker";
   const bubbleClasses = isSticker && stickerSrc && !message.isDeleted
-    ? `relative flex flex-col select-text px-1 py-1 bg-transparent border-none shadow-none ${isSelf ? "rounded-2xl rounded-tr-sm" : "rounded-2xl rounded-tl-sm"} message-bubble group/bubble`
+    ? `relative flex flex-col select-text px-1 py-1 bg-transparent border-none shadow-none ${isSelf ? "rounded-[20px] rounded-br-md" : "rounded-[20px] rounded-bl-md"} message-bubble group/bubble`
     : commonBubbleClasses;
 
   return (
     <>
       {/* Header: Sender name */}
       {showNameHeader && !message.isDeleted && (
-        <div className="flex items-center gap-2 mb-1 px-1 text-[12px] text-primary font-bold select-none">
+        <div className="flex items-center gap-2 mb-1 px-1 text-[13px] text-primary font-bold select-none">
           <span>{selectedUser?.fullName}</span>
-          <Link
-            to={`/u/${getUserHandle(selectedUser).replace("@", "")}`}
-            className="text-[11px] text-base-content/40 font-normal hover:underline cursor-pointer transition-opacity hover:opacity-85"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <span className="text-[11px] text-base-content/40 font-normal">
             {getUserHandle(selectedUser)}
-          </Link>
+          </span>
         </div>
       )}
 
