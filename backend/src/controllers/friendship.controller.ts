@@ -370,3 +370,20 @@ export const getPendingRequests = catchAsync(async (req: AuthRequest, res: Respo
     outgoing: outgoing.map(formatFriendship),
   });
 });
+
+export const matchContacts = catchAsync(async (req: AuthRequest, res: Response) => {
+  const myId = meId(req);
+  const hashes = Array.isArray(req.body?.hashes)
+    ? req.body.hashes.map((h: any) => String(h)).filter(Boolean).slice(0, 500)
+    : [];
+  if (hashes.length === 0) {
+    res.status(200).json([]);
+    return;
+  }
+  const users = await prisma.user.findMany({
+    where: { phoneHash: { in: hashes }, id: { not: myId } },
+    select: { id: true, fullName: true, username: true, profilePic: true },
+    take: 100,
+  });
+  res.status(200).json(users.map((u) => toResponse(u as any)));
+});

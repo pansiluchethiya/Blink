@@ -23,6 +23,8 @@ import { app, server } from "./lib/socket.js";
 import { deleteExpiredMessages } from "./controllers/message.controller.js";
 import { deleteOldNotifications } from "./controllers/notification.controller.js";
 import { deleteExpiredStories } from "./controllers/story.controller.js";
+import { sendBirthdayReminders } from "./jobs/birthday.job.js";
+import cron from "node-cron";
 import AppError from "./utils/AppError.js";
 import globalErrorHandler from "./middleware/error.middleware.js";
 import requestLogger from "./middleware/logger.middleware.js";
@@ -135,4 +137,6 @@ server.listen(PORT, async () => {
   setInterval(async () => { try { await deleteExpiredMessages(); } catch {} }, 20 * 60 * 1000);
   setInterval(async () => { try { await deleteOldNotifications(); } catch {} }, 60 * 60 * 1000);
   setInterval(async () => { try { await deleteExpiredStories(); } catch {} }, 15 * 60 * 1000);
+  // Birthday reminders daily at 09:00 server time (T-2, T-1, same day).
+  cron.schedule("0 9 * * *", async () => { try { await sendBirthdayReminders(); } catch {} });
 });

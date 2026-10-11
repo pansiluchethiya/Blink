@@ -189,3 +189,70 @@ export const uploadAvatar = catchAsync(async (req: AuthRequest, res: Response, n
   res.status(200).json(toResponse(safe as any));
 });
 
+
+const MINOR_AGE = 12;
+
+export const getAge = (birthday: Date): number => {
+  const now = new Date();
+  let age = now.getFullYear() - birthday.getFullYear();
+  const m = now.getMonth() - birthday.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birthday.getDate())) age--;
+  return age;
+};
+
+export const saveOnboarding = catchAsync(async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const me = getUserId(req);
+  const body = req.body ?? {};
+  const data: Record<string, unknown> = {};
+
+  if (body.fullName !== undefined) {
+    const name = String(body.fullName).trim().slice(0, 100);
+    if (!name) return next(new AppError("Name is required", 400));
+    data.fullName = name;
+  }
+  if (body.username !== undefined) {
+    const username = String(body.username).trim().toLowerCase().replace(/^@/, "").slice(0, 30);
+    if (!/^[a-z0-9_]{3,30}$/.test(username)) {
+      return next(new AppError("Username must be 3-30 chars: letters, numbers, underscores", 400));
+    }
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing && existing.id !== me) return next(new AppError("Username already taken", 400));
+    data.username = username;
+    data.handle = `@${username}`;
+  }
+  if (body.bio !== undefined) data.bio = String(body.bio).slice(0, 500);
+  if (body.phoneHash !== undefined) {
+    const ph = String(body.phoneHash).trim() || null;
+    if (ph) {
+      const existing = await prisma.user.findFirst({ where: { phoneHash: ph } });
+      if (existing && existing.id !== me) return next(new AppError("Number already linked", 400));
+    }
+    data.phoneHash = ph;
+  }
+  if (body.birthday !== undefined) {
+    const bday = new Date(body.birthday);
+    if (isNaN(bday.getTime()) || bday > new Date()) {
+      return next(new AppError("Invalid birthday", 400));
+    }
+    data.birthday = bday;
+    const minor = getAge(bday) < MINOR_AGE;
+    data.isMinor = minor;
+    if (minor) data.isPrivate = true;
+  }
+
+  if (body.completed === true) {
+    const current = await prisma.user.findUnique({ where: { id: me } });
+    const username = (data.username as string) ?? current?.username;
+    const fullName = (data.fullName as string) ?? current?.fullName;
+    const birthday = (data.birthday as Date) ?? current?.birthday;
+    // Auto-generated usernames from signup always exist, but enforce anyway.
+    if (!fullName || !birthday || !username) {
+      return next(new AppError("Name, birthday and username are required", 400));
+    }
+    data.onboardingCompleted = true;
+  }
+
+  const updated = await prisma.user.update({ where: { id: me }, data });
+  const { password: _pw3, ...safe3 } = updated as any;
+  res.status(200).json(toResponse(safe3 as any));
+});

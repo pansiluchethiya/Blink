@@ -62,6 +62,12 @@ export const deleteExpiredStories = async (): Promise<void> => {
 export const createStory = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const ownerId = meId(req);
+    // Minors: stories are view-only.
+    const owner = await prisma.user.findUnique({ where: { id: ownerId }, select: { isMinor: true } });
+    if (owner?.isMinor) {
+      res.status(403).json({ error: "Story uploads aren't available for this account" });
+      return;
+    }
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) {
       res.status(400).json({ error: "A media file (image/video) is required" });

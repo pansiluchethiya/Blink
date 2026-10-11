@@ -27,6 +27,7 @@ enum NotificationType {
   reply
   friend_request
   friend_accept
+  birthday
   follow
   reaction
   welcome
@@ -65,6 +66,10 @@ model User {
   handle                  String     @unique
   bio                     String     @default("") @db.VarChar(500)
   avatar                  String     @default("")
+  birthday                DateTime?
+  onboardingCompleted     Boolean    @default(false)
+  isMinor                 Boolean    @default(false)
+  phoneHash               String?    @unique
   isPrivate               Boolean    @default(false)
   privateAvatar           String     @default("")
   allowedViewers          String[]   @default([]) @db.Uuid

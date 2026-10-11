@@ -239,6 +239,22 @@ export const sendMessage = [
           isHelpCenterReceiver = true;
         }
 
+        // Minors: strangers can't message them, friends-only.
+        if ((receiverUser as any).isMinor) {
+          const friendship = await prisma.friendship.findFirst({
+            where: {
+              status: "accepted",
+              OR: [
+                { requesterId: senderId, receiverId: String(receiverId) },
+                { requesterId: String(receiverId), receiverId: senderId },
+              ],
+            },
+          });
+          if (!friendship) {
+            return res.status(403).json({ error: "This user only accepts messages from friends" });
+          }
+        }
+
         if (!isHelpCenterSender && !isHelpCenterReceiver) {
           const friendship = await prisma.friendship.findFirst({
             where: {
