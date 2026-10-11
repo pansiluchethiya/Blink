@@ -1,19 +1,27 @@
 import { X, Search, Phone, Video, ArrowLeft, MoreHorizontal, PanelRight } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
-import toast from "react-hot-toast";
+import { useCallStore } from "../store/useCallStore";
 import Avatar from "./Avatar";
 
 const ChatHeader = ({ onSearchClick, onMediaClick, mediaOpen, onPinnedClick, onBurgerClick, onAvatarClick, onMoreClick }) => {
    const { selectedUser, setSelectedUser, userStatus } = useChatStore();
    const { onlineUsers: authOnlineUsers } = useAuthStore();
+   const { startCall } = useCallStore();
 
   const status = userStatus[selectedUser?._id];
   const isOnline = authOnlineUsers.includes(selectedUser?._id);
 
   if (!selectedUser) return <div className="h-16 flex-shrink-0" />;
 
-  const notAvailable = () => toast("Voice and video calls aren't available yet", { icon: "📵" });
+  const voiceCall = () => startCall(
+    { _id: selectedUser._id, fullName: selectedUser.fullName, profilePic: selectedUser.profilePic },
+    "voice"
+  );
+  const videoCall = () => startCall(
+    { _id: selectedUser._id, fullName: selectedUser.fullName, profilePic: selectedUser.profilePic },
+    "video"
+  );
 
   return (
     <div className="px-4 py-3 border-b border-base-200 bg-base-100 flex-shrink-0 z-20 select-none">
@@ -58,14 +66,14 @@ const ChatHeader = ({ onSearchClick, onMediaClick, mediaOpen, onPinnedClick, onB
         {/* Action icons */}
         <div className="flex items-center gap-1">
           <button
-            onClick={notAvailable}
+            onClick={voiceCall}
             className="p-2.5 hover:bg-base-200 rounded-full transition-all text-primary hover:scale-105"
             title="Voice call"
           >
             <Phone size={20} />
           </button>
           <button
-            onClick={notAvailable}
+            onClick={videoCall}
             className="p-2.5 hover:bg-base-200 rounded-full transition-all text-primary hover:scale-105"
             title="Video call"
           >

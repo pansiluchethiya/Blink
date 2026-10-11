@@ -342,7 +342,7 @@ const WorkspaceChat = ({ onBurgerClick }) => {
           <div className="flex-1 flex flex-col overflow-hidden">
             <PinnedMessagesPanel channelId={selectedChannelId} />
             {/* Message Stream */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chat-bg-pattern scrollbar-thin">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chat-bg-pattern chat-wallpaper scrollbar-thin">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-base-content/60 py-10">
                   <div className="p-4 rounded-full bg-base-200 border border-base-300 mb-3">

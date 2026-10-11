@@ -21,6 +21,31 @@
   background-size: 40px 40px, 60px 60px;
 }
 
+/* ===== Chat wallpaper: warm photographic tint over the pattern =====
+   Pure CSS (no image download): soft warm washes that echo the
+   reference wallpaper. Dark theme gets a warm charcoal glow, light
+   theme a warm paper glow. Subtle enough to keep text readable. */
+.chat-wallpaper {
+  position: relative;
+}
+.chat-wallpaper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 90% 55% at 15% 0%, oklch(0.75 0.12 60 / 0.16), transparent 70%),
+    radial-gradient(ellipse 80% 50% at 90% 25%, oklch(0.62 0.15 30 / 0.14), transparent 70%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, oklch(0.55 0.13 45 / 0.16), transparent 70%);
+}
+.dark .chat-wallpaper::before,
+[data-theme="blink-dark"] .chat-wallpaper::before {
+  background-image:
+    radial-gradient(ellipse 90% 55% at 15% 0%, oklch(0.45 0.10 55 / 0.28), transparent 70%),
+    radial-gradient(ellipse 80% 50% at 90% 25%, oklch(0.38 0.12 30 / 0.26), transparent 70%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, oklch(0.32 0.10 45 / 0.30), transparent 70%);
+}
+
 /* ===== Focus Visible Support ===== */
 .focus-visible {
   @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-base-100;

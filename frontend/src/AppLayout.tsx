@@ -8,6 +8,7 @@ import NoChatSelected from "./components/NoChatSelected";
 import MobileBottomNav from "./components/MobileBottomNav";
 import UsersPanel from "./components/UsersPanel";
 import NotificationPanel from "./components/NotificationPanel";
+import CallsPanel from "./components/CallsPanel";
 import SettingsPage from "./pages/SettingsPage";
 import { useChatStore } from "./store/useChatStore";
 import { useErrorStore } from "./store/useErrorStore";
@@ -60,6 +61,7 @@ const AppLayout = () => {
     if (selectedWorkspace) return <WorkspaceSidebar />;
     switch (activeTab) {
       case "users": return <UsersPanel />;
+      case "calls": return <CallsPanel />;
       case "notifications": return <NotificationPanel />;
       case "settings": return <div className="h-full overflow-y-auto"><SettingsPage isEmbedded /></div>;
       default: return <ConversationList />;
@@ -100,7 +102,7 @@ const AppLayout = () => {
 
       {/* 4. Mobile Bottom Navigation */}
       <div className="md:hidden">
-        {!selectedUser && <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />}
+        {!(selectedUser || selectedWorkspace) && <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />}
       </div>
 
       {viewProfileUser && (

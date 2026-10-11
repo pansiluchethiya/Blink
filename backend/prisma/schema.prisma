@@ -85,6 +85,9 @@ model User {
   resourcesUploaded   WorkspaceResource[]
   scheduledMessages   ScheduledMessage[]
   folders             Folder[]
+  stories             Story[]
+  initiatedCalls      CallLog[]           @relation("CallCaller")
+  receivedCalls       CallLog[]           @relation("CallReceiver")
 
   @@index([email])
   @@index([username])
@@ -376,4 +379,44 @@ model ScheduledMessage {
 
   @@index([scheduledAt, isSent])
   @@map("scheduled_messages")
+}
+
+model Story {
+  id         String    @id @default(uuid()) @db.Uuid
+  ownerId    String    @db.Uuid
+  mediaUrl   String
+  publicId   String    @default("")
+  mediaType  String    @default("image")
+  caption    String    @default("") @db.VarChar(280)
+  archived   Boolean   @default(false)
+  archivedAt DateTime?
+  expiresAt  DateTime
+  viewedBy   String[]  @default([])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, expiresAt])
+  @@index([expiresAt, archived])
+  @@map("stories")
+}
+
+model CallLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  callerId    String    @db.Uuid
+  receiverId  String    @db.Uuid
+  type        String    @default("voice")
+  status      String    @default("missed")
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  durationSec Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  caller   User @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
+  receiver User @relation("CallReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([callerId, createdAt(sort: Desc)])
+  @@index([receiverId, createdAt(sort: Desc)])
+  @@map("call_logs")
 }

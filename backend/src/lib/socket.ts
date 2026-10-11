@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import http from "http";
 import express from "express";
+import jwt from "jsonwebtoken";
 
 const app = express();
 const server = http.createServer(app);
@@ -17,36 +18,51 @@ const io = new Server(server, {
   },
 });
 
-const userSocketMap: Record<string, string> = {}; // {userId: socketId}
+// Multi-device: one user may hold several socket ids (phone + desktop + tabs).
+const userSocketMap: Record<string, Set<string>> = {}; // {userId: Set<socketId>}
 const userStatusMap: Record<string, string> = {}; // {userId: status}
 
-export function getReceiverSocketId(userId: string): string | undefined {
-  return userSocketMap[userId];
+export function getReceiverSocketId(userId: string): string[] {
+  return userSocketMap[userId] ? Array.from(userSocketMap[userId]) : [];
+}
+
+function resolveUserId(socket: Socket): string | undefined {
+  // Prefer a verified JWT (handshake.auth.token); fall back to the legacy
+  // query.userId so older clients keep working.
+  const token = (socket.handshake.auth as any)?.token as string | undefined;
+  if (token && process.env.JWT_SECRET) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId: string };
+      if (decoded?.userId) return String(decoded.userId);
+    } catch {
+      // fall through to legacy query param
+    }
+  }
+  const q = socket.handshake.query.userId as string | undefined;
+  return q ? String(q) : undefined;
 }
 
 io.on("connection", (socket: Socket) => {
   console.log("A user connected", socket.id);
 
-  const userId = socket.handshake.query.userId as string | undefined;
+  const userId = resolveUserId(socket);
   if (userId) {
-    userSocketMap[userId] = socket.id;
+    if (!userSocketMap[userId]) userSocketMap[userId] = new Set();
+    userSocketMap[userId].add(socket.id);
     userStatusMap[userId] = "online";
+    socket.data.userId = userId;
   }
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("typing", (receiverId: string) => {
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("userTyping", userId);
-    }
+    const ids = getReceiverSocketId(receiverId);
+    if (ids.length) io.to(ids).emit("userTyping", userId);
   });
 
   socket.on("stopTyping", (receiverId: string) => {
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("userStopTyping", userId);
-    }
+    const ids = getReceiverSocketId(receiverId);
+    if (ids.length) io.to(ids).emit("userStopTyping", userId);
   });
 
   socket.on("joinWorkspace", (workspaceId: string) => {
@@ -71,10 +87,8 @@ io.on("connection", (socket: Socket) => {
 
   socket.on("messageRead", (data: { senderId: string; receiverId: string }) => {
     const { senderId, receiverId } = data;
-    const senderSocketId = getReceiverSocketId(senderId);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("messagesReadReceipt", receiverId);
-    }
+    const ids = getReceiverSocketId(senderId);
+    if (ids.length) io.to(ids).emit("messagesReadReceipt", receiverId);
   });
 
   socket.on("statusUpdated", (data: { status: string; statusMessage: string }) => {
@@ -96,13 +110,43 @@ io.on("connection", (socket: Socket) => {
     io.emit("userActivityOffline", inactiveUserId);
   });
 
+  // ---- 1:1 call signaling relay (WebRTC offer/answer/ICE + lifecycle) ----
+  // Payloads always carry `from` = verified/fallback userId of the sender.
+  const relayCall = (event: string, to: string, payload: Record<string, any> = {}) => {
+    if (!userId || !to) return;
+    const ids = getReceiverSocketId(String(to));
+    if (ids.length) io.to(ids).emit(event, { ...payload, from: userId });
+  };
+
+  socket.on("call:invite", (data: { to: string; callType: string; offer: any; fromName?: string }) => {
+    relayCall("call:incoming", data.to, { callType: data.callType, offer: data.offer, fromName: data.fromName });
+  });
+  socket.on("call:answer", (data: { to: string; answer: any }) => {
+    relayCall("call:answered", data.to, { answer: data.answer });
+  });
+  socket.on("call:ice", (data: { to: string; candidate: any }) => {
+    relayCall("call:ice", data.to, { candidate: data.candidate });
+  });
+  socket.on("call:decline", (data: { to: string }) => {
+    relayCall("call:declined", data.to);
+  });
+  socket.on("call:hangup", (data: { to: string }) => {
+    relayCall("call:ended", data.to);
+  });
+  socket.on("call:ringing", (data: { to: string }) => {
+    relayCall("call:ringing", data.to);
+  });
+
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.id);
-    if (userId) {
-      delete userSocketMap[userId];
-      delete userStatusMap[userId];
-      io.emit("getOnlineUsers", Object.keys(userSocketMap));
-      io.emit("userOffline", userId);
+    if (userId && userSocketMap[userId]) {
+      userSocketMap[userId].delete(socket.id);
+      if (userSocketMap[userId].size === 0) {
+        delete userSocketMap[userId];
+        delete userStatusMap[userId];
+        io.emit("getOnlineUsers", Object.keys(userSocketMap));
+        io.emit("userOffline", userId);
+      }
     }
   });
 });

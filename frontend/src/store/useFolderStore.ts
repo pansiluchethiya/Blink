@@ -70,6 +70,10 @@ const clean = (folders: unknown): ChatFolder[] | null => {
 
 export const FOLDER_COLORS = ["#F59E0B", "#0EA5E9", "#8B5CF6", "#10B981", "#EC4899", "#64748B"];
 
+// In-flight guard: two mount-time callers (App auth effect + list mount)
+// otherwise both pass the `hydrated` check and seed the server twice.
+let fetchInflight: Promise<void> | null = null;
+
 export const useFolderStore = create<FolderState>((set, get) => ({
   folders: loadFolders(),
   expanded: { "folder-freelancers": true },
@@ -77,31 +81,39 @@ export const useFolderStore = create<FolderState>((set, get) => ({
 
   fetchFolders: async () => {
     if (get().hydrated) return;
-    try {
-      const res = await axiosInstance.get("/folders");
-      let folders = clean(res.data);
-      if (folders && folders.length === 0) {
-        // First run for this account: seed the server with the local set
-        // (defaults or previously-offline edits) so all devices converge.
-        for (const f of get().folders) {
-          try {
-            await axiosInstance.post("/folders", { name: f.name, color: f.color, memberIds: f.memberIds });
-          } catch {
-            /* keep going — partial seeds reconcile on next login */
+    if (fetchInflight) return fetchInflight;
+    fetchInflight = (async () => {
+      try {
+        const res = await axiosInstance.get("/folders");
+        let folders = clean(res.data);
+        if (folders && folders.length === 0) {
+          // First run for this account: seed the server with the local set
+          // (defaults or previously-offline edits) so all devices converge.
+          for (const f of get().folders) {
+            try {
+              await axiosInstance.post("/folders", { name: f.name, color: f.color, memberIds: f.memberIds });
+            } catch {
+              /* keep going — partial seeds reconcile on next login */
+            }
           }
+          const retry = await axiosInstance.get("/folders").catch(() => null);
+          folders = clean(retry?.data) ?? folders;
         }
-        const retry = await axiosInstance.get("/folders").catch(() => null);
-        folders = clean(retry?.data) ?? folders;
+        if (folders) {
+          persist(folders);
+          set({ folders, hydrated: true });
+          return;
+        }
+      } catch {
+        /* offline — keep the local cache */
       }
-      if (folders) {
-        persist(folders);
-        set({ folders, hydrated: true });
-        return;
-      }
-    } catch {
-      /* offline — keep the local cache */
+      set({ hydrated: true });
+    })();
+    try {
+      await fetchInflight;
+    } finally {
+      fetchInflight = null;
     }
-    set({ hydrated: true });
   },
 
   addFolder: (name, color) => {

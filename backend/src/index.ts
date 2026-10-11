@@ -17,9 +17,12 @@ import friendshipRoutes from "./routes/friendship.route.js";
 import workspaceRoutes from "./routes/workspace.route.js";
 import widgetRoutes from "./routes/widget.route.js";
 import folderRoutes from "./routes/folder.route.js";
+import storyRoutes from "./routes/story.route.js";
+import callRoutes from "./routes/call.route.js";
 import { app, server } from "./lib/socket.js";
 import { deleteExpiredMessages } from "./controllers/message.controller.js";
 import { deleteOldNotifications } from "./controllers/notification.controller.js";
+import { deleteExpiredStories } from "./controllers/story.controller.js";
 import AppError from "./utils/AppError.js";
 import globalErrorHandler from "./middleware/error.middleware.js";
 import requestLogger from "./middleware/logger.middleware.js";
@@ -78,6 +81,8 @@ app.use("/api/friends", generalLimiter, friendshipRoutes);
 app.use("/api/workspaces", generalLimiter, workspaceRoutes);
 app.use("/api/widgets", generalLimiter, widgetRoutes);
 app.use("/api/folders", generalLimiter, folderRoutes);
+app.use("/api/stories", generalLimiter, storyRoutes);
+app.use("/api/calls", generalLimiter, callRoutes);
 
 app.all("/api/*", (req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
@@ -126,6 +131,8 @@ server.listen(PORT, async () => {
   await seedHelpCenter();
   try { await deleteExpiredMessages(); } catch (e: any) { console.error("cleanup expired failed:", e?.message); }
   try { await deleteOldNotifications(); } catch (e: any) { console.error("cleanup notifications failed:", e?.message); }
+  try { await deleteExpiredStories(); } catch (e: any) { console.error("cleanup stories failed:", e?.message); }
   setInterval(async () => { try { await deleteExpiredMessages(); } catch {} }, 20 * 60 * 1000);
   setInterval(async () => { try { await deleteOldNotifications(); } catch {} }, 60 * 60 * 1000);
+  setInterval(async () => { try { await deleteExpiredStories(); } catch {} }, 15 * 60 * 1000);
 });

@@ -149,6 +149,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!authUser || get().socket?.connected) return;
 
     const socket = io(BASE_URL, {
+      auth: {
+        token: localStorage.getItem("token"),
+      },
       query: {
         userId: authUser._id,
       },
@@ -159,6 +162,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     socket.on("getOnlineUsers", (userIds: string[]) => {
       set({ onlineUsers: userIds });
+    });
+
+    import("../store/useCallStore").then(({ useCallStore }) => {
+      useCallStore.getState().subscribeToCalls(socket, String(authUser._id));
     });
   },
   disconnectSocket: () => {

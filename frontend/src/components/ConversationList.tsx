@@ -1,10 +1,13 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useFriendStore } from "../store/useFriendStore";
 import { useFolderStore, FOLDER_COLORS, type ChatFolder } from "../store/useFolderStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import Avatar from "./Avatar";
+import StoriesStrip from "./StoriesStrip";
+import { formatChatTime } from "../lib/utils";
 import {
   Search,
   MessageSquare,
@@ -17,6 +20,7 @@ import {
   Trash2,
   Check,
   X,
+  Pin,
 } from "lucide-react";
 
 const ConversationList = () => {
@@ -54,6 +58,8 @@ const ConversationList = () => {
   const [folderModal, setFolderModal] = useState<{ mode: "create" } | { mode: "rename"; folder: ChatFolder } | null>(null);
   const [folderName, setFolderName] = useState("");
   const [folderColor, setFolderColor] = useState(FOLDER_COLORS[0]);
+  const [chip, setChip] = useState<"all" | "favorites" | "unread" | "groups">("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
     getUsers();
@@ -113,6 +119,22 @@ const ConversationList = () => {
 
   const orderedItems = [...pinnedItems, ...unpinnedItems];
   const byId = new Map(orderedItems.map((i) => [String(i._id), i]));
+
+  // Mobile filter chips (desktop has no chips, so chip is always "all" there)
+  const visibleItems = orderedItems.filter((item) => {
+    if (chip === "all") return true;
+    if (chip === "groups") return item.type === "workspace";
+    if (chip === "favorites") return item.type === "user" && authUser?.pinnedChats?.includes(item._id);
+    if (chip === "unread") return item.type === "user" && (item.unreadCount || 0) > 0;
+    return true;
+  });
+
+  const CHIPS = [
+    { id: "all", label: "All" },
+    { id: "favorites", label: "Favorites" },
+    { id: "unread", label: "Unread" },
+    { id: "groups", label: "Groups" },
+  ] as const;
 
   const selectItem = (item) => {
     if (item.type === 'workspace') {
@@ -213,6 +235,7 @@ const ConversationList = () => {
     const isOnline = onlineUsers.includes(user._id);
     const lastMessage = user.lastMessage;
     const isSelected = selectedUser?._id === user._id && !selectedWorkspace;
+    const isPinned = authUser?.pinnedChats?.includes(user._id);
     const preview = lastMessage?.text
       ? (lastMessage?.senderId === authUser?._id ? `You: ${lastMessage.text}` : lastMessage.text)
       : "No messages yet";
@@ -242,8 +265,11 @@ const ConversationList = () => {
         </div>
 
         <div className="flex-1 min-w-0 text-left">
-          <h3 className={`font-semibold truncate leading-tight ${compact ? "text-sm" : "text-[15px]"}`}>
-            {user.fullName}
+          <h3 className={`font-semibold truncate leading-tight flex items-center gap-1.5 ${compact ? "text-sm" : "text-[15px]"}`}>
+            <span className="truncate">{user.fullName}</span>
+            {isPinned && !compact && (
+              <Pin size={13} className={`flex-shrink-0 md:hidden ${isSelected ? "text-primary-content/70" : "text-base-content/40"}`} fill="currentColor" />
+            )}
           </h3>
           {!compact && (
             <p className={`text-[13px] truncate mt-0.5 ${isSelected ? "text-primary-content/80" : "text-base-content/50"}`}>
@@ -251,6 +277,12 @@ const ConversationList = () => {
             </p>
           )}
         </div>
+
+        {!compact && lastMessage && (
+          <span className={`md:hidden flex-shrink-0 text-[11px] font-medium ${isSelected ? "text-primary-content/70" : "text-base-content/40"}`}>
+            {formatChatTime(lastMessage.createdAt)}
+          </span>
+        )}
 
         {renderUnreadPill(user.unreadCount || 0, isSelected)}
 
@@ -401,7 +433,12 @@ const ConversationList = () => {
       {/* Header */}
       <div className="px-5 pt-5 pb-4 sticky top-0 z-10 bg-base-100">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-[22px] font-bold tracking-tight text-base-content">Chats</h1>
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/profile")} className="md:hidden" aria-label="My profile">
+              <Avatar user={authUser} className="size-9" />
+            </button>
+            <h1 className="text-[22px] font-bold tracking-tight text-base-content">Chats</h1>
+          </div>
           <button
             onClick={() => toggleCommandPalette()}
             className="size-9 rounded-full bg-base-200 hover:bg-base-300 text-base-content/60 hover:text-base-content flex items-center justify-center transition-all"
@@ -422,7 +459,26 @@ const ConversationList = () => {
             className="input w-full pl-11 pr-4 text-sm rounded-full bg-base-200 border-transparent focus:border-primary/40 focus:bg-base-100 placeholder:text-base-content/40"
           />
         </div>
+
+        {/* Mobile filter chips */}
+        <div className="md:hidden flex gap-2 mt-3 overflow-x-auto scrollbar-none">
+          {CHIPS.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setChip(c.id)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-all ${
+                chip === c.id
+                  ? "bg-primary text-primary-content shadow-md"
+                  : "bg-base-200 text-base-content/60"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      <StoriesStrip />
 
       <div className="flex-1 overflow-y-auto scrollbar-none px-3 pb-24">
         {isUsersLoading && orderedItems.length === 0 ? (
@@ -466,7 +522,7 @@ const ConversationList = () => {
               </button>
             </div>
             <div className="space-y-1.5">
-              {orderedItems.length === 0 ? (
+              {visibleItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
                   <div className="size-14 rounded-3xl bg-base-200 flex items-center justify-center mb-3">
                     <MessageSquare className="size-7 text-base-content/40" />
@@ -475,7 +531,7 @@ const ConversationList = () => {
                   <p className="text-base-content/50 text-sm">Start a conversation with your friends or groups!</p>
                 </div>
               ) : (
-                orderedItems.map(renderItem)
+                visibleItems.map(renderItem)
               )}
             </div>
           </>

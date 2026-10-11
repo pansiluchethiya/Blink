@@ -26,6 +26,7 @@ import ImageLightbox from "./components/ImageLightbox";
 import OfflineBar from "./components/OfflineBar";
 import UpdatePrompt from "./components/UpdatePrompt";
 import InstallPrompt from "./components/InstallPrompt";
+import CallOverlay from "./components/CallOverlay";
 import { ContextMenuProvider } from "./components/ContextMenu";
 import ThemeProvider from "./lib/ThemeProvider";
 
@@ -169,6 +170,7 @@ const App: React.FC = () => {
           <ErrorModal error={currentError?.error} onClose={clearError} onRetry={currentError?.onRetry ? retryCurrentError : null} />
           <CommandPalette />
           <ImageLightbox />
+          <CallOverlay />
           <OfflineBar />
           <UpdatePrompt />
           <InstallPrompt />

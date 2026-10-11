@@ -216,7 +216,7 @@ const ChatContainer = () => {
         <MessageSearch userId={selectedUser._id} onClose={() => setShowSearch(false)} />
       )}
 
-      <div className="flex-1 overflow-hidden chat-bg-pattern relative">
+      <div className="flex-1 overflow-hidden chat-bg-pattern chat-wallpaper relative">
         {/* Slim refresh shimmer while cached messages revalidate (SWR). */}
         {isMessagesLoading && messages.length > 0 && (
           <div className="absolute top-0 inset-x-0 z-10 flex justify-center pt-2 pointer-events-none">
