@@ -32,24 +32,31 @@ interface FolderState {
 
 const STORAGE_KEY = "blink-folders";
 
-const DEFAULT_FOLDERS: ChatFolder[] = [
-  { id: "folder-important", name: "Important", color: "#F59E0B", memberIds: [] },
-  { id: "folder-work", name: "Work", color: "#0EA5E9", memberIds: [] },
-  { id: "folder-freelancers", name: "Freelancers", color: "#8B5CF6", memberIds: [] },
-  { id: "folder-team", name: "Team", color: "#10B981", memberIds: [] },
-];
+// No pre-made folders: the list starts empty and the user adds their own.
+// "All" is the implicit default view (the ALL CHATS section + the All chip).
+const DEFAULT_SIGNATURES = new Set([
+  "Important|#F59E0B",
+  "Work|#0EA5E9",
+  "Freelancers|#8B5CF6",
+  "Team|#10B981",
+]);
+
+// True when this looks like a pre-made folder the user never adopted:
+// matches a retired default name+color and has no chats assigned.
+const isUnaddedDefault = (f: ChatFolder) =>
+  f.memberIds.length === 0 && DEFAULT_SIGNATURES.has(`${f.name}|${f.color}`);
 
 function loadFolders(): ChatFolder[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_FOLDERS;
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return DEFAULT_FOLDERS;
+    if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (f: any) => f && typeof f.id === "string" && typeof f.name === "string" && Array.isArray(f.memberIds)
     );
   } catch {
-    return DEFAULT_FOLDERS;
+    return [];
   }
 }
 
@@ -76,7 +83,7 @@ let fetchInflight: Promise<void> | null = null;
 
 export const useFolderStore = create<FolderState>((set, get) => ({
   folders: loadFolders(),
-  expanded: { "folder-freelancers": true },
+  expanded: {},
   hydrated: false,
 
   fetchFolders: async () => {
@@ -84,11 +91,32 @@ export const useFolderStore = create<FolderState>((set, get) => ({
     if (fetchInflight) return fetchInflight;
     fetchInflight = (async () => {
       try {
+        // Drop retired pre-made folders from the local cache up front so
+        // they can never be re-seeded to the server below.
+        const localKept = get().folders.filter((f) => !isUnaddedDefault(f));
+        if (localKept.length !== get().folders.length) {
+          persist(localKept);
+          set({ folders: localKept });
+        }
         const res = await axiosInstance.get("/folders");
         let folders = clean(res.data);
-        if (folders && folders.length === 0) {
+        if (folders) {
+          // One-time cleanup: drop retired pre-made folders the user never
+          // adopted (empty + default name/color), locally and on the server.
+          const pruned = folders.filter(isUnaddedDefault);
+          if (pruned.length > 0) {
+            folders = folders.filter((f) => !isUnaddedDefault(f));
+            persist(folders);
+            for (const f of pruned) {
+              if (!f.id.startsWith("folder-")) {
+                axiosInstance.delete(`/folders/${f.id}`).catch(() => {});
+              }
+            }
+          }
+        }
+        if (folders && folders.length === 0 && get().folders.some((f) => !isUnaddedDefault(f))) {
           // First run for this account: seed the server with the local set
-          // (defaults or previously-offline edits) so all devices converge.
+          // (previously-offline user folders) so all devices converge.
           for (const f of get().folders) {
             try {
               await axiosInstance.post("/folders", { name: f.name, color: f.color, memberIds: f.memberIds });

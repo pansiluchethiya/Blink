@@ -21,6 +21,7 @@ import {
   Check,
   X,
   Pin,
+  LayoutGrid,
 } from "lucide-react";
 
 const ConversationList = () => {
@@ -147,6 +148,12 @@ const ConversationList = () => {
   };
 
   const unreadOf = (item) => (item.type === 'user' ? item.unreadCount || 0 : 0);
+  const totalUnread = orderedItems.reduce((sum, item) => sum + unreadOf(item), 0);
+
+  const showAllCategory = () => {
+    setChip("all");
+    setSearchInput("");
+  };
 
   const openFolderModal = (mode: "create" | "rename", folder?: ChatFolder) => {
     if (mode === "create") {
@@ -506,6 +513,29 @@ const ConversationList = () => {
               </button>
             </div>
             <div className="space-y-0.5 mb-3">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={showAllCategory}
+                onKeyDown={(e) => { if (e.key === "Enter") showAllCategory(); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-base-200 transition-all cursor-pointer"
+              >
+                <span className="size-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/15 text-primary">
+                  <LayoutGrid size={17} />
+                </span>
+                <span className="flex-1 text-left text-[15px] font-medium text-base-content truncate">
+                  All
+                </span>
+                {totalUnread > 0 ? (
+                  <span className="min-w-6 h-6 px-1.5 rounded-full bg-primary text-primary-content text-[11px] font-bold flex items-center justify-center">
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                ) : (
+                  <span className="min-w-6 h-6 px-1.5 rounded-full bg-base-200 text-base-content/50 text-[11px] font-bold flex items-center justify-center">
+                    {orderedItems.length}
+                  </span>
+                )}
+              </div>
               {folders.map(renderFolderRow)}
             </div>
 
